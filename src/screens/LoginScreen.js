@@ -71,7 +71,7 @@ function LoginScreen({ onLogin }) {
       const endpoint = activeTab === 0 ? '/api/auth/register' : '/api/auth/login';
       const body = activeTab === 0 ? formData : { phone: formData.phone, password: formData.password };
 
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await fetch(`http://192.168.66.156:5000${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

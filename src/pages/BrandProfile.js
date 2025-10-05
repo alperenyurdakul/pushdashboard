@@ -143,7 +143,7 @@ function BrandProfile({ currentUser, setCurrentUser }) {
         formDataToSend.append('logo', formData.logo);
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/update-profile', {
+      const response = await fetch('http://192.168.66.156:5000/api/auth/update-profile', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
@@ -255,7 +255,7 @@ function BrandProfile({ currentUser, setCurrentUser }) {
               {/* Logo Upload */}
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
                 <Avatar
-                  src={logoPreview || (currentUser?.logo ? `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/logos/${currentUser.logo}` : null)}
+                  src={logoPreview || (currentUser?.logo ? `http://192.168.66.156:5000/uploads/logos/${currentUser.logo}` : null)}
                   sx={{ 
                     width: 120, 
                     height: 120, 
