@@ -54,7 +54,7 @@ const Events = ({ currentUser }) => {
   const loadEvents = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.66.156:5000/api/events/all-events');
+      const response = await fetch('http://172.20.10.4:5000/api/events/all-events');
       const data = await response.json();
       if (data.success) {
         setEvents(data.events);
@@ -148,7 +148,7 @@ const Events = ({ currentUser }) => {
         formDataToSend.append('image', formData.image);
       }
 
-      const response = await fetch('http://192.168.66.156:5000/api/events/create-event', {
+      const response = await fetch('http://172.20.10.4:5000/api/events/create-event', {
         method: 'POST',
         body: formDataToSend,
       });
@@ -179,7 +179,7 @@ const Events = ({ currentUser }) => {
 
   const handleViewResults = async (eventId) => {
     try {
-      const response = await fetch(`http://192.168.66.156:5000/api/events/event-results/${eventId}`);
+      const response = await fetch(`http://172.20.10.4:5000/api/events/event-results/${eventId}`);
       const data = await response.json();
       if (data.success) {
         setSelectedEvent(data.event);
@@ -196,7 +196,7 @@ const Events = ({ currentUser }) => {
     }
     
     try {
-      const response = await fetch(`http://192.168.66.156:5000/api/events/event/${eventId}`, {
+      const response = await fetch(`http://172.20.10.4:5000/api/events/event/${eventId}`, {
         method: 'DELETE',
       });
       
@@ -214,7 +214,7 @@ const Events = ({ currentUser }) => {
 
   const testOneSignal = async () => {
     try {
-      const response = await fetch('http://192.168.66.156:5000/api/events/test-onesignal', {
+      const response = await fetch('http://172.20.10.4:5000/api/events/test-onesignal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -299,7 +299,7 @@ const Events = ({ currentUser }) => {
                 {event.image && (
                   <Box sx={{ height: 200, overflow: 'hidden' }}>
                     <img
-                      src={`http://192.168.66.156:5000/uploads/${event.image}`}
+                      src={`http://172.20.10.4:5000/uploads/${event.image}`}
                       alt={event.title}
                       style={{
                         width: '100%',
