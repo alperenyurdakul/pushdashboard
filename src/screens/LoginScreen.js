@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_CONFIG from '../config/api';
 import {
   Box,
   Card,
@@ -71,7 +72,7 @@ function LoginScreen({ onLogin }) {
       const endpoint = activeTab === 0 ? '/api/auth/register' : '/api/auth/login';
       const body = activeTab === 0 ? formData : { phone: formData.phone, password: formData.password };
 
-      const response = await fetch(`http://172.20.10.4:5000${endpoint}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,10 +120,10 @@ function LoginScreen({ onLogin }) {
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Restaurant sx={{ fontSize: 60, color: '#1976d2', mb: 2 }} />
             <Typography variant="h4" component="h1" gutterBottom>
-              Restoran Banner Dashboard
+              Faydana
             </Typography>
             <Typography variant="body1" color="textSecondary">
-              Kampanya banner'larınızı yönetin ve analiz edin
+              Kampanyalarını paylaşmaya hazır mısın?
             </Typography>
           </Box>
 
@@ -184,11 +185,6 @@ function LoginScreen({ onLogin }) {
                     value={formData.userType}
                     onChange={(e) => handleInputChange('userType', e.target.value)}
                   >
-                    <FormControlLabel 
-                      value="customer" 
-                      control={<Radio />} 
-                      label="👤 Müşteri (Etkinlik Oluştur)" 
-                    />
                     <FormControlLabel 
                       value="brand" 
                       control={<Radio />} 

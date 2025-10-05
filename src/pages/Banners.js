@@ -29,6 +29,7 @@ import {
   CircularProgress,
   CardActions,
 } from '@mui/material';
+import API_CONFIG from '../config/api';
 import {
   Add,
   Visibility,
@@ -98,7 +99,7 @@ function Banners({ currentUser }) {
       console.log('Dashboard - currentUser:', currentUser);
       console.log('Dashboard - restaurantName:', currentUser?.name);
       
-      const response = await fetch(`http://172.20.10.4:5000/api/ai/banners`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/banners`);
       const data = await response.json();
       
       console.log('Dashboard - Backend response:', data);
@@ -181,7 +182,7 @@ function Banners({ currentUser }) {
     setLoading(true);
     try {
       console.log('🔢 Dashboard - Gönderilecek kod kotası:', formData.codeQuota);
-      const response = await fetch('http://172.20.10.4:5000/api/ai/generate-banner', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/generate-banner`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -274,7 +275,7 @@ function Banners({ currentUser }) {
         return;
       }
 
-      const response = await fetch('http://172.20.10.4:5000/api/ai/generate-verification-code', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/generate-verification-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -323,7 +324,7 @@ function Banners({ currentUser }) {
 
     try {
       // Müşteri kodunu doğrula
-      const response = await fetch('http://172.20.10.4:5000/api/ai/verify-customer-code', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/verify-customer-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -377,7 +378,7 @@ function Banners({ currentUser }) {
     }
 
     try {
-      const response = await fetch(`http://172.20.10.4:5000/api/ai/banners/${bannerId}?restaurantName=${encodeURIComponent(currentUser.name)}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/banners/${bannerId}?restaurantName=${encodeURIComponent(currentUser.name)}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_CONFIG from '../config/api';
 import {
   Box,
   Typography,
@@ -143,7 +144,7 @@ function BrandProfile({ currentUser, setCurrentUser }) {
         formDataToSend.append('logo', formData.logo);
       }
 
-      const response = await fetch('http://172.20.10.4:5000/api/auth/update-profile', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/update-profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
@@ -255,7 +256,7 @@ function BrandProfile({ currentUser, setCurrentUser }) {
               {/* Logo Upload */}
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
                 <Avatar
-                  src={logoPreview || (currentUser?.logo ? `http://172.20.10.4:5000/uploads/logos/${currentUser.logo}` : null)}
+                  src={logoPreview || (currentUser?.logo ? `${API_CONFIG.BASE_URL}/uploads/logos/${currentUser.logo}` : null)}
                   sx={{ 
                     width: 120, 
                     height: 120, 
