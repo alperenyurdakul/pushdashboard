@@ -256,7 +256,14 @@ function BrandProfile({ currentUser, setCurrentUser }) {
               {/* Logo Upload */}
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
                 <Avatar
-                  src={logoPreview || (currentUser?.logo ? `${API_CONFIG.BASE_URL}/uploads/logos/${currentUser.logo}` : null)}
+                  src={
+                    logoPreview
+                      || (currentUser?.logo
+                        ? (currentUser.logo.startsWith('http')
+                            ? currentUser.logo
+                            : `${API_CONFIG.BASE_URL}/uploads/logos/${currentUser.logo}`)
+                        : null)
+                  }
                   sx={{ 
                     width: 120, 
                     height: 120, 
