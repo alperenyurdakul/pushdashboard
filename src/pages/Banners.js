@@ -93,13 +93,15 @@ function Banners({ currentUser }) {
   });
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  // Banner'ları backend'den çek
+  // Banner'ları backend'den çek - sadece kendi banner'larını
   const loadBanners = async () => {
     try {
       console.log('Dashboard - currentUser:', currentUser);
       console.log('Dashboard - restaurantName:', currentUser?.name);
       
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/banners`);
+      // Sadece kendi banner'larını çek
+      const restaurantName = encodeURIComponent(currentUser?.name || '');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/banners?restaurantName=${restaurantName}`);
       const data = await response.json();
       
       console.log('Dashboard - Backend response:', data);

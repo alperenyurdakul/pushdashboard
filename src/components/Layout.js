@@ -69,7 +69,7 @@ function Layout({ children, currentUser, onLogout }) {
     <div>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
-          {currentUser?.userType === 'brand' ? '🏪' : '👤'} {currentUser?.name || 'AI Banner Generator'}
+          {currentUser?.userType === 'brand' ? '🏪' : '👤'} {currentUser?.name || 'FAYDANA'}
         </Typography>
       </Toolbar>
       <Divider />
@@ -110,7 +110,7 @@ function Layout({ children, currentUser, onLogout }) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            AI Banner Generator - {currentUser?.name}
+             {currentUser?.name}
           </Typography>
           
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
