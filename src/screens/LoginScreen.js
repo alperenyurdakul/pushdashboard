@@ -1,5 +1,23 @@
 import React, { useState } from 'react';
 import API_CONFIG from '../config/api';
+
+const CITIES = [
+  'İstanbul',
+  'Ankara',
+  'İzmir',
+  'Bursa',
+  'Antalya',
+  'Adana',
+  'Gaziantep',
+  'Konya',
+  'Kocaeli',
+  'Mersin',
+  'Samsun',
+  'Eskişehir',
+  'Diyarbakır',
+  'Kayseri',
+  'Denizli',
+];
 import {
   Box,
   Card,
@@ -38,7 +56,8 @@ function LoginScreen({ onLogin }) {
     password: '',
     name: '',
     userType: 'customer',
-    category: 'Kahve'
+    category: 'Kahve',
+    city: 'İstanbul'
   });
 
   const handleInputChange = (field, value) => {
@@ -108,7 +127,7 @@ function LoginScreen({ onLogin }) {
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     setError('');
-    setFormData({ phone: '', password: '', name: '', userType: 'customer', category: 'Kahve' });
+    setFormData({ phone: '', password: '', name: '', userType: 'customer', category: 'Kahve', city: 'İstanbul' });
   };
 
   return (
@@ -219,6 +238,23 @@ function LoginScreen({ onLogin }) {
                     ⚠️ <strong>Önemli:</strong> Seçtiğiniz kategori daha sonra değiştirilemez!
                   </Typography>
                 </Alert>
+
+                {/* Şehir Seçimi */}
+                <FormControl fullWidth sx={{ mt: 2 }}>
+                  <InputLabel>Şehir *</InputLabel>
+                  <Select
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    label="Şehir *"
+                    required
+                  >
+                    {CITIES.map((city) => (
+                      <MenuItem key={city} value={city}>
+                        📍 {city}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </>
             )}
 
