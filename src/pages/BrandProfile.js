@@ -335,7 +335,7 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                   value={formData.category}
                   label="Kategori"
                   onChange={(e) => handleInputChange('category', e.target.value)}
-                  disabled={!editing}
+                  disabled={true}
                 >
                   {categories.map((category) => (
                     <MenuItem key={category} value={category}>
@@ -344,6 +344,11 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                   ))}
                 </Select>
               </FormControl>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <Typography variant="caption">
+                  ⚠️ Kategori kayıt sırasında seçilmiştir ve değiştirilemez
+                </Typography>
+              </Alert>
             </CardContent>
           </Card>
         </Grid>

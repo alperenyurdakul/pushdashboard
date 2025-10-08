@@ -18,6 +18,9 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Select,
+  MenuItem,
+  InputLabel,
 } from '@mui/material';
 import {
   Restaurant,
@@ -34,7 +37,8 @@ function LoginScreen({ onLogin }) {
     phone: '',
     password: '',
     name: '',
-    userType: 'customer'
+    userType: 'customer',
+    category: 'Kahve'
   });
 
   const handleInputChange = (field, value) => {
@@ -104,7 +108,7 @@ function LoginScreen({ onLogin }) {
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     setError('');
-    setFormData({ phone: '', password: '', name: '', userType: 'customer' });
+    setFormData({ phone: '', password: '', name: '', userType: 'customer', category: 'Kahve' });
   };
 
   return (
@@ -192,6 +196,29 @@ function LoginScreen({ onLogin }) {
                     />
                   </RadioGroup>
                 </FormControl>
+
+                {/* Kategori Seçimi */}
+                <FormControl fullWidth sx={{ mt: 2 }}>
+                  <InputLabel>Kategori *</InputLabel>
+                  <Select
+                    value={formData.category}
+                    onChange={(e) => handleInputChange('category', e.target.value)}
+                    label="Kategori *"
+                    required
+                  >
+                    <MenuItem value="Kahve">☕ Kahve</MenuItem>
+                    <MenuItem value="Yiyecek">🍽️ Yiyecek</MenuItem>
+                    <MenuItem value="Bar/Pub">🍺 Bar/Pub</MenuItem>
+                    <MenuItem value="Giyim">👕 Giyim</MenuItem>
+                    <MenuItem value="Kuaför">✂️ Kuaför</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="caption">
+                    ⚠️ <strong>Önemli:</strong> Seçtiğiniz kategori daha sonra değiştirilemez!
+                  </Typography>
+                </Alert>
               </>
             )}
 
