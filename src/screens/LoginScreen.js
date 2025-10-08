@@ -1,23 +1,5 @@
 import React, { useState } from 'react';
 import API_CONFIG from '../config/api';
-
-const CITIES = [
-  'İstanbul',
-  'Ankara',
-  'İzmir',
-  'Bursa',
-  'Antalya',
-  'Adana',
-  'Gaziantep',
-  'Konya',
-  'Kocaeli',
-  'Mersin',
-  'Samsun',
-  'Eskişehir',
-  'Diyarbakır',
-  'Kayseri',
-  'Denizli',
-];
 import {
   Box,
   Card,
@@ -46,6 +28,24 @@ import {
   Lock,
   Person,
 } from '@mui/icons-material';
+
+const CITIES = [
+  'İstanbul',
+  'Ankara',
+  'İzmir',
+  'Bursa',
+  'Antalya',
+  'Adana',
+  'Gaziantep',
+  'Konya',
+  'Kocaeli',
+  'Mersin',
+  'Samsun',
+  'Eskişehir',
+  'Diyarbakır',
+  'Kayseri',
+  'Denizli',
+];
 
 function LoginScreen({ onLogin }) {
   const [activeTab, setActiveTab] = useState(0);
