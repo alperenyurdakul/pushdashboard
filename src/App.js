@@ -10,18 +10,13 @@ import LoginScreen from './screens/LoginScreen';
 // Pages
 import Banners from './pages/Banners';
 import BrandProfile from './pages/BrandProfile';
+import ComingSoon from './pages/ComingSoon';
 
-// Theme
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
+// Import our custom theme
+import customTheme from './theme';
+
+// Import feature flags
+import FEATURES from './config/features';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,10 +45,20 @@ function App() {
     setIsLoggedIn(false);
   };
 
+  // "Çok Yakında" sayfası aktifse onu göster
+  if (FEATURES.SHOW_COMING_SOON) {
+    return (
+      <ThemeProvider theme={customTheme}>
+        <CssBaseline />
+        <ComingSoon />
+      </ThemeProvider>
+    );
+  }
+
   // Login olmamış kullanıcıları LoginScreen'e yönlendir
   if (!isLoggedIn) {
     return (
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={customTheme}>
         <CssBaseline />
         <LoginScreen onLogin={handleLogin} />
       </ThemeProvider>
@@ -61,7 +66,7 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={customTheme}>
       <CssBaseline />
       <Router>
         <Layout currentUser={currentUser} onLogout={handleLogout}>

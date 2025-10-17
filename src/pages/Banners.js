@@ -58,7 +58,7 @@ function Banners({ currentUser }) {
     setFormData({
       campaignDescription: '',
       targetAudience: 'Genel kitle',
-      category: 'Kahve',
+      category: currentUser?.category || 'Kahve', // Kullanıcının kategorisi otomatik seçili
       codeQuota: 10,
       location: {
         city: 'İstanbul',
@@ -407,30 +407,13 @@ function Banners({ currentUser }) {
         <Typography variant="h4" component="h1">
           Bannerlar
         </Typography>
-        <Box>
-          <Button
-            variant="contained"
-            startIcon={<Create />}
-            onClick={handleOpenCreateDialog}
-            sx={{ mr: 2 }}
-          >
-            Bildirim Oluştur
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleGenerateCode}
-            sx={{ mr: 2 }}
-          >
-            🔑 Kod Oluştur
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={loadBanners}
-          >
-            🔄 Yenile
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          startIcon={<Create />}
+          onClick={handleOpenCreateDialog}
+        >
+          Banner Oluştur
+        </Button>
       </Box>
 
       {/* İstatistik Kartları */}
@@ -633,7 +616,7 @@ function Banners({ currentUser }) {
       {/* Banner Oluşturma Dialog */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>
-          🎨 Yeni AI Banner Oluştur
+          Yeni Bildirim Oluştur
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
@@ -659,6 +642,7 @@ function Banners({ currentUser }) {
                   <Select
                     value={formData.category}
                     label="Kategori"
+                    disabled
                     onChange={(e) => handleInputChange('category', e.target.value)}
                   >
                     <MenuItem value="Kahve">Kahve</MenuItem>
@@ -666,8 +650,12 @@ function Banners({ currentUser }) {
                     <MenuItem value="Bar/Pub">Bar/Pub</MenuItem>
                     <MenuItem value="Giyim">Giyim</MenuItem>
                     <MenuItem value="Kuaför">Kuaför</MenuItem>
+                    <MenuItem value="Spor">Spor</MenuItem>
                   </Select>
                 </FormControl>
+                <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block', mt: -1 }}>
+                  📌 Kategori, kayıt sırasında belirlediğiniz kategoriye sabitlenmiştir
+                </Typography>
 
                 <TextField
                   fullWidth
@@ -741,27 +729,15 @@ function Banners({ currentUser }) {
                   🏪 Marka Bilgileri
                 </Typography>
                 
-                <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="Marka Adı"
-                      value={currentUser?.name || ''}
-                      disabled
-                      helperText="Bu alan otomatik olarak doldurulur ve değiştirilemez"
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="Marka Türü"
-                      value={formData.brandInfo.type || 'restaurant'}
-                      onChange={(e) => handleInputChange('brandInfo', { ...formData.brandInfo, type: e.target.value })}
-                      size="small"
-                    />
-                  </Grid>
-                </Grid>
+                <TextField
+                  fullWidth
+                  label="Marka Adı"
+                  value={currentUser?.name || ''}
+                  disabled
+                  helperText="Bu alan otomatik olarak doldurulur ve değiştirilemez"
+                  size="small"
+                  sx={{ mb: 2 }}
+                />
                 
                 <TextField
                   fullWidth
@@ -777,7 +753,7 @@ function Banners({ currentUser }) {
               
               <Grid item xs={12} md={6}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  🎯 AI Önizleme
+                  Banner Tasarım Önizleme
                 </Typography>
                 {formData.campaignDescription && (
                   <Box sx={{ 

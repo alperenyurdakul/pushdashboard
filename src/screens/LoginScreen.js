@@ -230,6 +230,8 @@ function LoginScreen({ onLogin }) {
                     <MenuItem value="Bar/Pub">🍺 Bar/Pub</MenuItem>
                     <MenuItem value="Giyim">👕 Giyim</MenuItem>
                     <MenuItem value="Kuaför">✂️ Kuaför</MenuItem>
+                    <MenuItem value="Spor">✂️ Kuaför</MenuItem>
+
                   </Select>
                 </FormControl>
                 

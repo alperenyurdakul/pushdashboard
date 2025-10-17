@@ -110,7 +110,7 @@ function Dashboard({ currentUser }) {
         </Typography>
         <Typography variant="body1" color="text.secondary">
           {isBrand 
-            ? 'AI Banner Generator ile kampanyalarınızı yönetin ve performansınızı takip edin.'
+            ? 'Faydana ile kampanyalarınızı yönetin ve performansınızı takip edin.'
             : 'Etkinliklere katılın ve bildirimlerinizi takip edin.'
           }
         </Typography>

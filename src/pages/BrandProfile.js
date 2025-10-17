@@ -18,12 +18,14 @@ import {
   Avatar,
   IconButton,
   Divider,
+  Chip,
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Upload as UploadIcon,
   Edit as EditIcon,
   Business as BusinessIcon,
+  Storefront as StorefrontIcon,
 } from '@mui/icons-material';
 
 function BrandProfile({ currentUser, setCurrentUser }) {
@@ -50,7 +52,8 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     'Yiyecek', 
     'Bar/Pub',
     'Giyim',
-    'Kuaför'
+    'Kuaför',
+    'Spor'
   ];
 
   const brandTypes = [
@@ -58,7 +61,8 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     'Kafe',
     'Bar',
     'Mağaza',
-    'Hizmet'
+    'Hizmet',
+    'Spor'
   ];
 
   useEffect(() => {
@@ -67,8 +71,14 @@ function BrandProfile({ currentUser, setCurrentUser }) {
       setFormData(prev => ({
         ...prev,
         brandName: currentUser.name || '',
+        brandType: currentUser.brandType || '',
+        description: currentUser.description || '',
+        category: currentUser.category || 'Kahve',
         phone: currentUser.phone || '',
         email: currentUser.email || '',
+        address: currentUser.address || '',
+        city: currentUser.city || 'İstanbul',
+        district: currentUser.district || 'Kadıköy',
       }));
     }
   }, [currentUser]);
@@ -194,23 +204,28 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     setLogoPreview(null);
     // Form'u orijinal değerlere sıfırla
     if (currentUser) {
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
         brandName: currentUser.name || '',
+        brandType: currentUser.brandType || '',
+        description: currentUser.description || '',
+        category: currentUser.category || 'Kahve',
         phone: currentUser.phone || '',
         email: currentUser.email || '',
+        address: currentUser.address || '',
+        city: currentUser.city || 'İstanbul',
+        district: currentUser.district || 'Kadıköy',
         logo: null
-      }));
+      });
     }
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box>
       {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <BusinessIcon sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
-          <Typography variant="h4" component="h1">
+          <StorefrontIcon sx={{ mr: 2, fontSize: 32, color: '#28A745' }} />
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: '#212529' }}>
             Marka Profili
           </Typography>
         </Box>
@@ -220,15 +235,40 @@ function BrandProfile({ currentUser, setCurrentUser }) {
             variant="contained"
             startIcon={<EditIcon />}
             onClick={() => setEditing(true)}
+            sx={{
+              backgroundColor: '#28A745',
+              '&:hover': {
+                backgroundColor: '#1E7E34',
+              },
+              px: 3,
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+            }}
           >
             Düzenle
           </Button>
         ) : (
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               variant="outlined"
               onClick={handleCancelEdit}
               disabled={loading}
+              sx={{
+                borderColor: '#E9ECEF',
+                color: '#6C757D',
+                '&:hover': {
+                  borderColor: '#28A745',
+                  color: '#28A745',
+                  backgroundColor: '#E6F7ED',
+                },
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 500,
+              }}
             >
               İptal
             </Button>
@@ -237,6 +277,17 @@ function BrandProfile({ currentUser, setCurrentUser }) {
               startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
               onClick={handleSaveProfile}
               disabled={loading}
+              sx={{
+                backgroundColor: '#28A745',
+                '&:hover': {
+                  backgroundColor: '#1E7E34',
+                },
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 500,
+              }}
             >
               {loading ? 'Kaydediliyor...' : 'Kaydet'}
             </Button>
@@ -247,14 +298,23 @@ function BrandProfile({ currentUser, setCurrentUser }) {
       <Grid container spacing={3}>
         {/* Sol Kolon - Logo ve Temel Bilgiler */}
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
+          <Card sx={{ 
+            borderRadius: 3,
+            boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #E9ECEF',
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ 
+                fontWeight: 600, 
+                color: '#212529',
+                mb: 3,
+                fontSize: '1.25rem'
+              }}>
                 Logo ve Temel Bilgiler
               </Typography>
               
               {/* Logo Upload */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
                 <Avatar
                   src={
                     logoPreview
@@ -268,11 +328,15 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                     width: 120, 
                     height: 120, 
                     mb: 2,
-                    border: '2px solid',
-                    borderColor: 'primary.main'
+                    border: '3px solid',
+                    borderColor: '#E9ECEF',
+                    backgroundColor: '#F8F9FA',
+                    '& img': {
+                      objectFit: 'contain'
+                    }
                   }}
                 >
-                  <BusinessIcon sx={{ fontSize: 60 }} />
+                  <BusinessIcon sx={{ fontSize: 60, color: '#6C757D' }} />
                 </Avatar>
                 
                 {editing && (
@@ -307,26 +371,28 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                 label="Marka Adı"
                 value={formData.brandName}
                 onChange={(e) => handleInputChange('brandName', e.target.value)}
-                disabled={!editing}
+                disabled={true}
                 sx={{ mb: 2 }}
               />
-
-              {/* Marka Tipi */}
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Marka Tipi</InputLabel>
-                <Select
-                  value={formData.brandType}
-                  label="Marka Tipi"
-                  onChange={(e) => handleInputChange('brandType', e.target.value)}
-                  disabled={!editing}
-                >
-                  {brandTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 2,
+                  backgroundColor: '#E6F7ED',
+                  border: '1px solid #28A745',
+                  borderRadius: 2,
+                  '& .MuiAlert-icon': {
+                    color: '#28A745',
+                  },
+                  '& .MuiAlert-message': {
+                    color: '#212529',
+                  }
+                }}
+              >
+                <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                  ℹ️ Marka adı kayıt sırasında seçilmiştir ve değiştirilemez
+                </Typography>
+              </Alert>
 
               {/* Kategori */}
               <FormControl fullWidth sx={{ mb: 2 }}>
@@ -344,8 +410,22 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                   ))}
                 </Select>
               </FormControl>
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                <Typography variant="caption">
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mb: 2,
+                  backgroundColor: '#FFF3CD',
+                  border: '1px solid #FFC107',
+                  borderRadius: 2,
+                  '& .MuiAlert-icon': {
+                    color: '#FFC107',
+                  },
+                  '& .MuiAlert-message': {
+                    color: '#856404',
+                  }
+                }}
+              >
+                <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
                   ⚠️ Kategori kayıt sırasında seçilmiştir ve değiştirilemez
                 </Typography>
               </Alert>
@@ -355,9 +435,18 @@ function BrandProfile({ currentUser, setCurrentUser }) {
 
         {/* Sağ Kolon - Detaylı Bilgiler */}
         <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
+          <Card sx={{ 
+            borderRadius: 3,
+            boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #E9ECEF',
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ 
+                fontWeight: 600, 
+                color: '#212529',
+                mb: 3,
+                fontSize: '1.25rem'
+              }}>
                 Detaylı Bilgiler
               </Typography>
               
