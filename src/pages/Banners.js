@@ -60,6 +60,8 @@ function Banners({ currentUser }) {
       targetAudience: 'Genel kitle',
       category: currentUser?.category || 'Kahve', // Kullanıcının kategorisi otomatik seçili
       codeQuota: 10,
+      codeType: 'random', // Varsayılan olarak random
+      fixedCode: '',
       location: {
         city: 'İstanbul',
         district: 'Kadıköy',
@@ -80,6 +82,8 @@ function Banners({ currentUser }) {
     targetAudience: 'Genel kitle',
     category: 'Kahve',
     codeQuota: 10,
+    codeType: 'random',
+    fixedCode: '',
     location: {
       city: 'İstanbul',
       district: 'Kadıköy',
@@ -181,9 +185,32 @@ function Banners({ currentUser }) {
       return;
     }
 
+    // Sabit kod validasyonu
+    if (formData.codeType === 'fixed') {
+      if (!formData.fixedCode || formData.fixedCode.length < 4 || formData.fixedCode.length > 20) {
+        setSnackbar({
+          open: true,
+          message: 'Sabit kod 4-20 karakter arası olmalıdır!',
+          severity: 'error'
+        });
+        return;
+      }
+      if (!/^[a-zA-Z0-9]+$/.test(formData.fixedCode)) {
+        setSnackbar({
+          open: true,
+          message: 'Sabit kod sadece harf ve rakam içerebilir!',
+          severity: 'error'
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       console.log('🔢 Dashboard - Gönderilecek kod kotası:', formData.codeQuota);
+      console.log('🔒 Dashboard - Kod tipi:', formData.codeType);
+      console.log('🔑 Dashboard - Sabit kod:', formData.codeType === 'fixed' ? formData.fixedCode : 'N/A');
+      
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/ai/generate-banner`, {
         method: 'POST',
         headers: {
@@ -200,7 +227,11 @@ function Banners({ currentUser }) {
             name: currentUser.name
           },
           category: formData.category,
-          codeQuota: formData.codeQuota
+          codeQuota: formData.codeQuota,
+          codeSettings: {
+            codeType: formData.codeType,
+            fixedCode: formData.codeType === 'fixed' ? formData.fixedCode : null
+          }
         }),
       });
 
@@ -221,8 +252,10 @@ function Banners({ currentUser }) {
           setFormData({
             campaignDescription: '',
             targetAudience: 'Genel kitle',
-            category: 'Kahve',
+            category: currentUser?.category || 'Kahve',
             codeQuota: 10,
+            codeType: 'random',
+            fixedCode: '',
             location: {
               city: 'İstanbul',
               district: 'Genel',
@@ -671,6 +704,37 @@ function Banners({ currentUser }) {
                   helperText="Bu kampanya için kaç adet kod oluşturulabileceğini belirleyin"
                   sx={{ mb: 2 }}
                 />
+
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Kod Tipi</InputLabel>
+                  <Select
+                    value={formData.codeType}
+                    label="Kod Tipi"
+                    onChange={(e) => handleInputChange('codeType', e.target.value)}
+                  >
+                    <MenuItem value="random">🎲 Random Kod (Her kullanıcı için farklı)</MenuItem>
+                    <MenuItem value="fixed">🔒 Sabit Kod (Tüm kullanıcılar için aynı)</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {formData.codeType === 'fixed' && (
+                  <TextField
+                    fullWidth
+                    label="Sabit Kod"
+                    type="text"
+                    value={formData.fixedCode}
+                    onChange={(e) => {
+                      // Sadece harf ve rakam, boşluk ve özel karakter yok
+                      const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
+                      handleInputChange('fixedCode', value);
+                    }}
+                    inputProps={{ maxLength: 20 }}
+                    placeholder="Örnek: indirim20, KAHVE50, yaz2025"
+                    helperText="Tüm kullanıcılar bu kodu kullanacak. Harf ve rakam kullanabilirsiniz (4-20 karakter)."
+                    sx={{ mb: 2 }}
+                    error={formData.codeType === 'fixed' && (formData.fixedCode.length < 4 || formData.fixedCode.length > 20)}
+                  />
+                )}
                 
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Hedef Kitle</InputLabel>
