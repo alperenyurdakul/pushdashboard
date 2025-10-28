@@ -55,46 +55,90 @@ function Banners({ currentUser }) {
   const handleOpenCreateDialog = () => {
     console.log('🔢 Dialog açılırken currentUser:', currentUser);
     console.log('🔢 Dialog açılırken formData.codeQuota:', formData.codeQuota);
+    
+    // Kullanıcının kategorisini belirle
+    let defaultCategory = currentUser?.category;
+    if (!defaultCategory) {
+      // Kategori yoksa userType'a göre ilk kategoriyi seç
+      defaultCategory = currentUser?.userType === 'eventBrand' ? 'Konser' : 'Kahve';
+    }
+    
     setFormData({
       campaignDescription: '',
       targetAudience: 'Genel kitle',
-      category: currentUser?.category || 'Kahve', // Kullanıcının kategorisi otomatik seçili
+      category: defaultCategory, // Kullanıcının kategorisi otomatik seçili
       codeQuota: 10,
       codeType: 'random', // Varsayılan olarak random
       fixedCode: '',
+      offerType: 'percentage',
+      discountPercentage: 20,
+      originalPrice: '',
+      discountedPrice: '',
+      freeItemName: '',
+      freeItemCondition: '',
+      startDate: new Date().toISOString().split('T')[0], // Bugünün tarihi
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 gün sonrası
+      startTime: '09:00',
+      endTime: '23:00',
       location: {
-        city: 'İstanbul',
-        district: 'Kadıköy',
+        city: currentUser?.city || 'İstanbul',
+        district: currentUser?.district || 'Kadıköy',
         address: ''
       },
       brandInfo: {
-        name: currentUser.name, // Otomatik doldurulacak
-        type: 'restaurant',
-        description: ''
-      }
+        name: currentUser?.name || '', // Otomatik doldurulacak
+        type: currentUser?.brandType || 'restaurant',
+        description: currentUser?.description || ''
+      },
+      menu: {
+        link: '',
+        image: null
+      },
+      bannerImage: null
     });
     setCreateDialogOpen(true);
   };
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [formData, setFormData] = useState({
-    campaignDescription: '',
-    targetAudience: 'Genel kitle',
-    category: 'Kahve',
-    codeQuota: 10,
-    codeType: 'random',
-    fixedCode: '',
-    location: {
-      city: 'İstanbul',
-      district: 'Kadıköy',
-      address: ''
-    },
-    brandInfo: {
-      name: '',
-      type: '',
-      description: ''
-    }
-  });
+  
+  // İlk formData - currentUser'a göre dinamik
+  const getInitialFormData = () => {
+    const defaultCategory = currentUser?.category || (currentUser?.userType === 'eventBrand' ? 'Çizim' : 'Kahve');
+    return {
+      campaignDescription: '',
+      targetAudience: 'Genel kitle',
+      category: defaultCategory,
+      codeQuota: 10,
+      codeType: 'random',
+      fixedCode: '',
+      offerType: 'percentage', // percentage, fixedPrice, freeItem
+      discountPercentage: 20,
+      originalPrice: '',
+      discountedPrice: '',
+      freeItemName: '',
+      freeItemCondition: '',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      startTime: '09:00',
+      endTime: '23:00',
+      location: {
+        city: currentUser?.city || 'İstanbul',
+        district: currentUser?.district || 'Kadıköy',
+        address: ''
+      },
+      brandInfo: {
+        name: currentUser?.name || '',
+        type: currentUser?.brandType || 'restaurant',
+        description: currentUser?.description || ''
+      },
+      menu: {
+        link: '',
+        image: null
+      }
+    };
+  };
+  
+  const [formData, setFormData] = useState(getInitialFormData());
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   // Banner'ları backend'den çek - sadece kendi banner'larını
@@ -129,42 +173,42 @@ function Banners({ currentUser }) {
   }, [currentUser]);
 
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'active':
+  const getStatusIcon = (approvalStatus) => {
+    switch (approvalStatus) {
+      case 'approved':
         return <CheckCircle color="success" />;
       case 'pending':
         return <Schedule color="warning" />;
-      case 'completed':
-        return <Image color="primary" />;
-      default:
+      case 'rejected':
         return <Error color="error" />;
+      default:
+        return <Schedule color="warning" />;
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
+  const getStatusColor = (approvalStatus) => {
+    switch (approvalStatus) {
+      case 'approved':
         return 'success';
       case 'pending':
         return 'warning';
-      case 'completed':
-        return 'primary';
-      default:
+      case 'rejected':
         return 'error';
+      default:
+        return 'warning';
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'active':
+  const getStatusText = (approvalStatus) => {
+    switch (approvalStatus) {
+      case 'approved':
         return 'Aktif';
       case 'pending':
-        return 'Beklemede';
-      case 'completed':
-        return 'Tamamlandı';
+        return 'Onay Bekliyor';
+      case 'rejected':
+        return 'Reddedildi';
       default:
-        return 'Hata';
+        return 'Onay Bekliyor';
     }
   };
 
@@ -231,7 +275,23 @@ function Banners({ currentUser }) {
           codeSettings: {
             codeType: formData.codeType,
             fixedCode: formData.codeType === 'fixed' ? formData.fixedCode : null
-          }
+          },
+          offerType: formData.offerType,
+          offerDetails: {
+            discountPercentage: formData.offerType === 'percentage' ? formData.discountPercentage : null,
+            originalPrice: formData.offerType === 'fixedPrice' ? parseFloat(formData.originalPrice) : null,
+            discountedPrice: formData.offerType === 'fixedPrice' ? parseFloat(formData.discountedPrice) : null,
+            freeItemName: formData.offerType === 'freeItem' ? formData.freeItemName : null,
+            freeItemCondition: formData.offerType === 'freeItem' ? formData.freeItemCondition : null
+          },
+          campaign: {
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+            startTime: formData.startTime,
+            endTime: formData.endTime
+          },
+          menu: formData.menu,
+          bannerImage: formData.bannerImage
         }),
       });
 
@@ -244,31 +304,61 @@ function Banners({ currentUser }) {
           const newBanner = result.data;
           console.log('Yeni banner eklendi:', newBanner);
           
+          // Kullanıcının kredisini güncelle
+          if (result.remainingCredits !== undefined) {
+            const updatedUser = { ...currentUser, credits: result.remainingCredits };
+            // Local storage'ı güncelle
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            storedUser.credits = result.remainingCredits;
+            localStorage.setItem('user', JSON.stringify(storedUser));
+            // Parent component'e bildir (eğer bir callback varsa)
+            window.location.reload(); // Sayfayı yenile ki credits güncellensin
+          }
+          
           // Banner listesini backend'den yeniden çek
           loadBanners();
           setCreateDialogOpen(false);
           
           // Form'u temizle
+          const defaultCategory = currentUser?.category || (currentUser?.userType === 'eventBrand' ? 'Çizim' : 'Kahve');
           setFormData({
             campaignDescription: '',
             targetAudience: 'Genel kitle',
-            category: currentUser?.category || 'Kahve',
+            category: defaultCategory,
             codeQuota: 10,
             codeType: 'random',
             fixedCode: '',
+            offerType: 'percentage',
+            discountPercentage: 20,
+            originalPrice: '',
+            discountedPrice: '',
+            freeItemName: '',
+            freeItemCondition: '',
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            startTime: '09:00',
+            endTime: '23:00',
             location: {
-              city: 'İstanbul',
-              district: 'Genel',
+              city: currentUser?.city || 'İstanbul',
+              district: currentUser?.district || 'Genel',
               address: ''
             },
             brandInfo: {
-              name: currentUser.name, // Otomatik doldurulacak
-              type: 'restaurant',
-              description: ''
+              name: currentUser?.name || '',
+              type: currentUser?.brandType || 'restaurant',
+              description: currentUser?.description || ''
+            },
+            menu: {
+              link: '',
+              image: null
             }
           });
           
-          alert('Banner başarıyla oluşturuldu!');
+          setSnackbar({
+            open: true,
+            message: 'Banner oluşturuldu! Admin onayı bekliyor. Onaylandığında kullanıcılara görünür olacak.',
+            severity: 'success'
+          });
         } else {
           alert(`Banner oluşturulurken hata: ${result.message}`);
         }
@@ -373,11 +463,31 @@ function Banners({ currentUser }) {
       const result = await response.json();
 
       if (result.success) {
-        setSnackbar({
-          open: true,
-          message: `Kod başarıyla doğrulandı! Müşteri: ${result.data.customerPhone}`,
-          severity: 'success'
-        });
+        // Mesajı kampanya tipine göre oluştur
+        let message = `Kod başarıyla doğrulandı!\n\nMüşteri: ${result.data.customerPhone}`;
+        
+        const offerType = result.data.offerType || 'percentage';
+        const billAmount = result.data.billAmount;
+        
+        if (offerType === 'percentage' && billAmount) {
+          message += `\n\n💰 Hesap Bilgileri:\n`;
+          message += `• Toplam: ${billAmount.originalAmount} TL\n`;
+          message += `• Ödenecek: ${billAmount.discountedAmount} TL\n`;
+          message += `• İndirim: ${billAmount.savedAmount} TL (${result.data.offerDetails?.discountPercentage}%)`;
+        } else if (offerType === 'fixedPrice') {
+          const original = result.data.offerDetails?.originalPrice || 0;
+          const discounted = result.data.offerDetails?.discountedPrice || 0;
+          message += `\n\n💰 Kampanya:\n`;
+          message += `• Kampanyalı Fiyat: ${discounted} TL\n`;
+          message += `• Normal Fiyat: ${original} TL\n`;
+          message += `• Kazanç: ${original - discounted} TL`;
+        } else if (offerType === 'freeItem') {
+          message += `\n\n🎁 Kampanya:\n`;
+          message += `• ${result.data.offerDetails?.freeItemCondition}\n`;
+          message += `• ${result.data.offerDetails?.freeItemName} BEDAVA!`;
+        }
+        
+        alert(message);
         
         setVerifyDialogOpen(false);
         setVerifyCode('');
@@ -440,14 +550,35 @@ function Banners({ currentUser }) {
         <Typography variant="h4" component="h1">
           Bannerlar
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Create />}
-          onClick={handleOpenCreateDialog}
-        >
-          Banner Oluştur
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          {/* Kredi Bilgisi */}
+          <Card sx={{ minWidth: 150 }}>
+            <CardContent sx={{ py: 1, px: 2 }}>
+              <Typography color="textSecondary" variant="caption">
+                Kalan Krediniz
+              </Typography>
+              <Typography variant="h5" color={currentUser?.credits > 0 ? 'success.main' : 'error.main'}>
+                {currentUser?.credits ?? 0}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Button
+            variant="contained"
+            startIcon={<Create />}
+            onClick={handleOpenCreateDialog}
+            disabled={!currentUser?.credits || currentUser.credits <= 0}
+          >
+            Banner Oluştur
+          </Button>
+        </Box>
       </Box>
+
+      {/* Kredi Uyarısı */}
+      {(!currentUser?.credits || currentUser.credits <= 0) && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Krediniz yetersiz! Banner oluşturmak için kredinizi yenilemeniz gerekiyor.
+        </Alert>
+      )}
 
       {/* İstatistik Kartları */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -513,7 +644,7 @@ function Banners({ currentUser }) {
               <TableRow>
                 <TableCell colSpan={8} align="center">
                   <Typography color="textSecondary">
-                    Henüz banner oluşturulmamış. İlk banner'ınızı oluşturmak için "Yeni AI Banner" butonuna tıklayın.
+                    Henüz banner oluşturulmamış. İlk banner'ınızı oluşturmak için "Banner Oluştur" butonuna tıklayın.
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -531,9 +662,9 @@ function Banners({ currentUser }) {
                   <TableRow key={banner._id || banner.id}>
                     <TableCell>
                       <Chip
-                        icon={getStatusIcon(banner.status)}
-                        label={getStatusText(banner.status)}
-                        color={getStatusColor(banner.status)}
+                        icon={getStatusIcon(banner.approvalStatus || 'pending')}
+                        label={getStatusText(banner.approvalStatus || 'pending')}
+                        color={getStatusColor(banner.approvalStatus || 'pending')}
                         size="small"
                       />
                     </TableCell>
@@ -647,7 +778,13 @@ function Banners({ currentUser }) {
       </TableContainer>
 
       {/* Banner Oluşturma Dialog */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog 
+        open={createDialogOpen} 
+        onClose={() => setCreateDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        fullScreen={window.innerWidth < 600}
+      >
         <DialogTitle>
           Yeni Bildirim Oluştur
         </DialogTitle>
@@ -678,16 +815,33 @@ function Banners({ currentUser }) {
                     disabled
                     onChange={(e) => handleInputChange('category', e.target.value)}
                   >
-                    <MenuItem value="Kahve">Kahve</MenuItem>
-                    <MenuItem value="Yiyecek">Yiyecek</MenuItem>
-                    <MenuItem value="Bar/Pub">Bar/Pub</MenuItem>
-                    <MenuItem value="Giyim">Giyim</MenuItem>
-                    <MenuItem value="Kuaför">Kuaför</MenuItem>
-                    <MenuItem value="Spor">Spor</MenuItem>
+                    {currentUser?.userType === 'eventBrand' ? (
+                      <>
+                        <MenuItem value="Konser">🎵 Konser</MenuItem>
+                        <MenuItem value="Sinema">🎬 Sinema</MenuItem>
+                        <MenuItem value="Tiyatro">🎭 Tiyatro</MenuItem>
+                        <MenuItem value="Sosyal Etkinlik">🎉 Sosyal Etkinlik</MenuItem>
+                        <MenuItem value="Spor Etkinliği">🏃 Spor Etkinliği</MenuItem>
+                        <MenuItem value="El Sanatları">🎨 El Sanatları</MenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <MenuItem value="Kahve">Kahve</MenuItem>
+                        <MenuItem value="Yiyecek">Yiyecek</MenuItem>
+                        <MenuItem value="Bar/Pub">Bar/Pub</MenuItem>
+                        <MenuItem value="Giyim">Giyim</MenuItem>
+                        <MenuItem value="Kuaför">Kuaför</MenuItem>
+                        <MenuItem value="Spor">Spor</MenuItem>
+                        <MenuItem value="Tatlı">Tatlı</MenuItem>
+                        <MenuItem value="Mobilya">Mobilya</MenuItem>
+                        <MenuItem value="Çizim">🎨 Çizim</MenuItem>
+                        <MenuItem value="Boyama">🖌️ Boyama</MenuItem>
+                      </>
+                    )}
                   </Select>
                 </FormControl>
                 <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block', mt: -1 }}>
-                  📌 Kategori, kayıt sırasında belirlediğiniz kategoriye sabitlenmiştir
+                  Kategori, kayıt sırasında belirlediğiniz kategoriye sabitlenmiştir
                 </Typography>
 
                 <TextField
@@ -697,7 +851,7 @@ function Banners({ currentUser }) {
                   value={formData.codeQuota}
                   onChange={(e) => {
                     const value = e.target.value;
-                    console.log('🔢 Dashboard - Kod kotası değişti:', value);
+                    console.log('Dashboard - Kod kotası değişti:', value);
                     handleInputChange('codeQuota', value);
                   }}
                   inputProps={{ min: 1, max: 1000 }}
@@ -736,6 +890,90 @@ function Banners({ currentUser }) {
                   />
                 )}
                 
+                {/* Kampanya Tipi */}
+                <FormControl fullWidth sx={{ mb: 2, mt: 2 }}>
+                  <InputLabel>Kampanya Tipi</InputLabel>
+                  <Select
+                    value={formData.offerType}
+                    label="Kampanya Tipi"
+                    onChange={(e) => handleInputChange('offerType', e.target.value)}
+                  >
+                    <MenuItem value="percentage">💯 Yüzde İndirim</MenuItem>
+                    <MenuItem value="fixedPrice">💰 Sabit Fiyat</MenuItem>
+                    <MenuItem value="freeItem">🎁 Bedava Ürün</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Yüzde İndirim */}
+                {formData.offerType === 'percentage' && (
+                  <TextField
+                    fullWidth
+                    label="İndirim Yüzdesi"
+                    type="number"
+                    value={formData.discountPercentage}
+                    onChange={(e) => handleInputChange('discountPercentage', e.target.value)}
+                    inputProps={{ min: 1, max: 100 }}
+                    helperText="Örnek: 20 (müşteri hesabından %20 indirim yapılacak)"
+                    sx={{ mb: 2 }}
+                  />
+                )}
+
+                {/* Sabit Fiyat */}
+                {formData.offerType === 'fixedPrice' && (
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Normal Fiyat (TL)"
+                        type="number"
+                        value={formData.originalPrice}
+                        onChange={(e) => handleInputChange('originalPrice', e.target.value)}
+                        inputProps={{ min: 0 }}
+                        helperText="Ürünün normal fiyatı"
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Kampanyalı Fiyat (TL)"
+                        type="number"
+                        value={formData.discountedPrice}
+                        onChange={(e) => handleInputChange('discountedPrice', e.target.value)}
+                        inputProps={{ min: 0 }}
+                        helperText="Kampanyalı fiyat"
+                        size="small"
+                      />
+                    </Grid>
+                  </Grid>
+                )}
+
+                {/* Bedava Ürün */}
+                {formData.offerType === 'freeItem' && (
+                  <>
+                    <TextField
+                      fullWidth
+                      label="Koşul"
+                      type="text"
+                      value={formData.freeItemCondition}
+                      onChange={(e) => handleInputChange('freeItemCondition', e.target.value)}
+                      placeholder="Örnek: Kahve alana"
+                      helperText="Koşul nedir?"
+                      sx={{ mb: 2 }}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Bedava Ürün"
+                      type="text"
+                      value={formData.freeItemName}
+                      onChange={(e) => handleInputChange('freeItemName', e.target.value)}
+                      placeholder="Örnek: Cheesecake"
+                      helperText="Hangi ürün bedava verilecek?"
+                      sx={{ mb: 2 }}
+                    />
+                  </>
+                )}
+                
                 <FormControl fullWidth sx={{ mb: 2 }}>
                   <InputLabel>Hedef Kitle</InputLabel>
                   <Select
@@ -752,13 +990,69 @@ function Banners({ currentUser }) {
                   </Select>
                 </FormControl>
 
+                {/* Kampanya Tarihleri */}
+                <Typography variant="subtitle2" sx={{ mb: 1, mt: 2, fontWeight: 'bold' }}>
+                  📅 Kampanya Tarihleri
+                </Typography>
+                
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Başlangıç Tarihi"
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                      helperText="Kampanyanın başlayacağı tarih"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Bitiş Tarihi"
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                      helperText="Kampanyanın biteceği tarih"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Başlangıç Saati"
+                      type="time"
+                      value={formData.startTime}
+                      onChange={(e) => handleInputChange('startTime', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                      helperText="Günlük başlangıç saati"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Bitiş Saati"
+                      type="time"
+                      value={formData.endTime}
+                      onChange={(e) => handleInputChange('endTime', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                      helperText="Günlük bitiş saati"
+                    />
+                  </Grid>
+                </Grid>
+
                 {/* Lokasyon Bilgileri */}
                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
                   📍 Lokasyon Bilgileri
                 </Typography>
                 
                 <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
                       label="Şehir"
@@ -767,7 +1061,7 @@ function Banners({ currentUser }) {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
                       label="İlçe"
@@ -813,6 +1107,116 @@ function Banners({ currentUser }) {
                   rows={2}
                   size="small"
                 />
+                
+                {/* Menü Seçenekleri */}
+                <Box sx={{ mt: 3, p: 2, border: '1px solid #ddd', borderRadius: 2, backgroundColor: '#f9f9f9' }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    🍽️ Menü Seçenekleri
+                  </Typography>
+                  
+                  <TextField
+                    fullWidth
+                    label="Menü Linki"
+                    placeholder="https://example.com/menu"
+                    value={formData.menu.link}
+                    onChange={(e) => handleInputChange('menu', { ...formData.menu, link: e.target.value })}
+                    sx={{ mb: 2 }}
+                    size="small"
+                  />
+                  
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                    Veya menü görseli yükleyin:
+                  </Typography>
+                  
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        // Dosyayı base64'e çevir (gerçek uygulamada S3'e yüklenir)
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          handleInputChange('menu', { ...formData.menu, image: event.target.result });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ marginBottom: '16px' }}
+                  />
+                  
+                  {formData.menu.image && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="success.main">
+                        ✅ Menü görseli yüklendi
+                      </Typography>
+                      <img 
+                        src={formData.menu.image} 
+                        alt="Menü önizleme" 
+                        style={{ 
+                          maxWidth: '100%', 
+                          maxHeight: '200px', 
+                          borderRadius: '8px',
+                          marginTop: '8px'
+                        }} 
+                      />
+                    </Box>
+                  )}
+                  
+                  <Typography variant="caption" color="textSecondary">
+                    Menü linki veya görseli ekleyebilirsiniz. Her ikisi de isteğe bağlıdır.
+                  </Typography>
+                </Box>
+
+                {/* Banner Görseli */}
+                <Box sx={{ mt: 3, p: 2, border: '1px solid #ddd', borderRadius: 2, backgroundColor: '#f9f9f9' }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    🖼️ Banner Görseli
+                  </Typography>
+                  
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                    Kampanya görseli yükleyin (isteğe bağlı):
+                  </Typography>
+                  
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        // Dosyayı base64'e çevir (gerçek uygulamada S3'e yüklenir)
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          handleInputChange('bannerImage', event.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ marginBottom: '16px' }}
+                  />
+                  
+                  {formData.bannerImage && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="success.main">
+                        ✅ Banner görseli yüklendi
+                      </Typography>
+                      <img 
+                        src={formData.bannerImage} 
+                        alt="Banner önizleme" 
+                        style={{ 
+                          maxWidth: '100%', 
+                          maxHeight: '200px', 
+                          borderRadius: '8px', 
+                          marginTop: '8px' 
+                        }} 
+                      />
+                    </Box>
+                  )}
+                  
+                  <Typography variant="caption" color="textSecondary">
+                    Banner görseli kampanya detay sayfasında en üstte görüntülenecektir.
+                  </Typography>
+                </Box>
               </Grid>
               
               <Grid item xs={12} md={6}>
@@ -873,7 +1277,7 @@ function Banners({ currentUser }) {
             disabled={loading || !formData.campaignDescription.trim()}
             startIcon={loading ? <CircularProgress size={20} /> : <Create />}
           >
-            {loading ? 'Oluşturuluyor...' : 'AI Banner Oluştur'}
+            {loading ? 'Oluşturuluyor...' : 'Banner Oluştur'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -923,6 +1327,26 @@ function Banners({ currentUser }) {
                   }}>
                     {selectedBanner.aiGeneratedText}
                   </Typography>
+                  
+                  <Typography variant="subtitle2" gutterBottom>
+                    Durum:
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <Chip
+                      icon={getStatusIcon(selectedBanner.approvalStatus || 'pending')}
+                      label={getStatusText(selectedBanner.approvalStatus || 'pending')}
+                      color={getStatusColor(selectedBanner.approvalStatus || 'pending')}
+                    />
+                  </Box>
+                  
+                  {selectedBanner.approvalStatus === 'rejected' && selectedBanner.rejectedReason && (
+                    <Box sx={{ mb: 2 }}>
+                      <Alert severity="error">
+                        <Typography variant="subtitle2" fontWeight="bold">Red Sebebi:</Typography>
+                        <Typography variant="body2">{selectedBanner.rejectedReason}</Typography>
+                      </Alert>
+                    </Box>
+                  )}
                   
                   <Typography variant="subtitle2" gutterBottom>
                     İstatistikler:

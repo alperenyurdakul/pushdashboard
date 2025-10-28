@@ -47,14 +47,30 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     logo: null
   });
 
-  const categories = [
+  const campaignCategories = [
     'Kahve',
     'Yiyecek', 
     'Bar/Pub',
     'Giyim',
     'Kuaför',
-    'Spor'
+    'Spor',
+    'Tatlı',
+    'Mobilya',
+    'Çizim',
+    'Boyama'
   ];
+
+  const eventCategories = [
+    'Konser',
+    'Sinema',
+    'Tiyatro',
+    'Sosyal Etkinlik',
+    'Spor Etkinliği',
+    'El Sanatları'
+  ];
+
+  // Kullanıcının türüne göre kategori listesini belirle
+  const categories = currentUser?.userType === 'eventBrand' ? eventCategories : campaignCategories;
 
   const brandTypes = [
     'Restoran',
@@ -62,18 +78,27 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     'Bar',
     'Mağaza',
     'Hizmet',
-    'Spor'
+    'Spor',
+    'Atölye',
+    'Sanat Merkezi'
   ];
 
   useEffect(() => {
     // Kullanıcı bilgilerini form'a yükle
     if (currentUser) {
+      // Kategori belirleme - userType'a göre varsayılan
+      let defaultCategory = currentUser.category;
+      if (!defaultCategory) {
+        defaultCategory = currentUser.userType === 'eventBrand' ? 'Konser' : 'Kahve';
+      }
+      
+      
       setFormData(prev => ({
         ...prev,
         brandName: currentUser.name || '',
         brandType: currentUser.brandType || '',
         description: currentUser.description || '',
-        category: currentUser.category || 'Kahve',
+        category: defaultCategory,
         phone: currentUser.phone || '',
         email: currentUser.email || '',
         address: currentUser.address || '',
@@ -204,11 +229,17 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     setLogoPreview(null);
     // Form'u orijinal değerlere sıfırla
     if (currentUser) {
+      // Kategori belirleme - userType'a göre varsayılan
+      let defaultCategory = currentUser.category;
+      if (!defaultCategory) {
+        defaultCategory = currentUser.userType === 'eventBrand' ? 'Konser' : 'Kahve';
+      }
+      
       setFormData({
         brandName: currentUser.name || '',
         brandType: currentUser.brandType || '',
         description: currentUser.description || '',
-        category: currentUser.category || 'Kahve',
+        category: defaultCategory,
         phone: currentUser.phone || '',
         email: currentUser.email || '',
         address: currentUser.address || '',
@@ -395,21 +426,18 @@ function BrandProfile({ currentUser, setCurrentUser }) {
               </Alert>
 
               {/* Kategori */}
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Kategori</InputLabel>
-                <Select
-                  value={formData.category}
-                  label="Kategori"
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  disabled={true}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField
+                fullWidth
+                label="Kategori"
+                value={formData.category || (currentUser?.userType === 'eventBrand' ? 'Konser' : 'Kahve')}
+                disabled={true}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiInputBase-input.Mui-disabled': {
+                    WebkitTextFillColor: 'rgba(0, 0, 0, 0.87)',
+                  }
+                }}
+              />
               <Alert 
                 severity="warning" 
                 sx={{ 

@@ -29,15 +29,19 @@ import {
   Edit as EditIcon,
   Storefront as StorefrontIcon,
   PhotoLibrary as PhotoLibraryIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import theme from '../theme';
 
-const drawerWidth = 240;
+const drawerWidth = 280;
 
 const menuItems = [
-  { text: 'Marka Profili', icon: <StorefrontIcon />, path: '/brand-profile', userTypes: ['brand'] },
-  { text: 'Bannerlar', icon: <PhotoLibraryIcon />, path: '/banners', userTypes: ['brand'] },
+  { text: 'Admin Panel', icon: <AdminPanelSettingsIcon />, path: '/admin', userTypes: ['admin'] },
+  { text: 'Marka Profili', icon: <StorefrontIcon />, path: '/brand-profile', userTypes: ['brand', 'eventBrand'] },
+  { text: 'Bannerlar', icon: <PhotoLibraryIcon />, path: '/banners', userTypes: ['brand', 'eventBrand'] },
+  { text: 'İstatistikler', icon: <AssessmentIcon />, path: '/analytics', userTypes: ['brand', 'eventBrand'] },
 ];
 
 function Layout({ children, currentUser, onLogout }) {
@@ -69,8 +73,9 @@ function Layout({ children, currentUser, onLogout }) {
   };
 
   // Kullanıcı tipine göre menü öğelerini filtrele
+  const userType = currentUser?.isAdmin ? 'admin' : (currentUser?.userType || 'customer');
   const filteredMenuItems = menuItems.filter(item => 
-    item.userTypes.includes(currentUser?.userType || 'customer')
+    item.userTypes.includes(userType)
   );
 
   const drawer = (
@@ -232,7 +237,7 @@ function Layout({ children, currentUser, onLogout }) {
               >
                 <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #E9ECEF' }}>
                   <Typography variant="body2" sx={{ color: '#6C757D', fontSize: '0.75rem' }}>
-                    Marka
+                    {currentUser?.userType === 'eventBrand' ? 'Etkinlik Markası' : 'Marka'}
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600, color: '#212529' }}>
                     {currentUser?.name}
@@ -332,7 +337,7 @@ function Layout({ children, currentUser, onLogout }) {
           component="main"
           sx={{
             flexGrow: 1,
-            p: 4,
+            p: { xs: 2, sm: 4 },
             width: { sm: `calc(100% - ${drawerWidth}px)` },
             backgroundColor: '#F8F9FA',
             minHeight: '100vh',

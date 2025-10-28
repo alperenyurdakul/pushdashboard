@@ -55,16 +55,51 @@ function LoginScreen({ onLogin }) {
     phone: '',
     password: '',
     name: '',
-    userType: 'customer',
+    email: '',
+    userType: 'brand',
     category: 'Kahve',
     city: 'İstanbul'
   });
 
+  // Kategori seçenekleri - userType'a göre
+  const getCategoryOptions = () => {
+    if (formData.userType === 'eventBrand') {
+      return [
+        { value: 'Konser', label: 'Konser' },
+        { value: 'Sinema', label: 'Sinema' },
+        { value: 'Tiyatro', label: 'Tiyatro' },
+        { value: 'Sosyal Etkinlik', label: 'Sosyal Etkinlik' },
+        { value: 'Spor Etkinliği', label: 'Spor Etkinliği' },
+      ];
+    }
+    return [
+      { value: 'Kahve', label: 'Kahve' },
+      { value: 'Yiyecek', label: 'Yiyecek' },
+      { value: 'Bar/Pub', label: 'Bar/Pub' },
+      { value: 'Giyim', label: 'Giyim' },
+      { value: 'Kuaför', label: 'Kuaför' },
+      { value: 'Spor', label: 'Spor' },
+      { value: 'Tatlı', label: 'Tatlı' },
+      { value: 'Mobilya', label: 'Mobilya' },
+      { value: 'Çizim', label: 'Çizim' },
+      { value: 'Boyama', label: 'Boyama' },
+    ];
+  };
+
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // userType değiştiğinde kategoriyi sıfırla
+      if (field === 'userType') {
+        const categories = value === 'eventBrand' 
+          ? ['Konser', 'Sinema', 'Tiyatro', 'Sosyal Etkinlik', 'Spor Etkinliği', 'El Sanatları']
+          : ['Kahve', 'Yiyecek', 'Bar/Pub', 'Giyim', 'Kuaför', 'Spor', 'Tatlı', 'Mobilya', 'Çizim', 'Boyama'];
+        newData.category = categories[0];
+      }
+      
+      return newData;
+    });
   };
 
   const validateForm = () => {
@@ -80,6 +115,16 @@ function LoginScreen({ onLogin }) {
 
     if (!activeTab && !formData.name.trim()) {
       setError('İsim gerekli!');
+      return false;
+    }
+
+    if (!activeTab && !formData.email.trim()) {
+      setError('E-posta gerekli!');
+      return false;
+    }
+
+    if (!activeTab && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError('Geçerli bir e-posta adresi girin!');
       return false;
     }
 
@@ -127,7 +172,7 @@ function LoginScreen({ onLogin }) {
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     setError('');
-    setFormData({ phone: '', password: '', name: '', userType: 'customer', category: 'Kahve', city: 'İstanbul' });
+    setFormData({ phone: '', password: '', name: '', userType: 'brand', category: 'Kahve', city: 'İstanbul' });
   };
 
   return (
@@ -141,10 +186,17 @@ function LoginScreen({ onLogin }) {
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Restaurant sx={{ fontSize: 60, color: '#1976d2', mb: 2 }} />
-            <Typography variant="h4" component="h1" gutterBottom>
-              Faydana
-            </Typography>
+            <Box 
+              component="img" 
+              src="/icon.png" 
+              alt="Faydana Logo" 
+              sx={{ 
+                width: 180, 
+                height: 80, 
+                mb: 2,
+                objectFit: 'contain'
+              }} 
+            />
             <Typography variant="body1" color="textSecondary">
               Kampanyalarını paylaşmaya hazır mısın?
             </Typography>
@@ -190,28 +242,40 @@ function LoginScreen({ onLogin }) {
               <>
                 <TextField
                   fullWidth
-                  label="Restoran/Marka Adı"
+                  label="Marka Adı"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   margin="normal"
                   required
-                  InputProps={{
-                    startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />,
-                  }}
+                />
+                
+                <TextField
+                  fullWidth
+                  label="E-posta"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  margin="normal"
+                  required
+                  placeholder="ornek@email.com"e
                 />
                 
                 {/* Kullanıcı Tipi Seçimi */}
                 <FormControl component="fieldset" sx={{ mt: 2, width: '100%' }}>
                   <FormLabel component="legend">Hesap Tipi</FormLabel>
                   <RadioGroup
-                    row
                     value={formData.userType}
                     onChange={(e) => handleInputChange('userType', e.target.value)}
                   >
                     <FormControlLabel 
                       value="brand" 
                       control={<Radio />} 
-                      label="🏪 Marka (Kampanya Oluştur)" 
+                      label="Marka (Kampanya Oluştur)" 
+                    />
+                    <FormControlLabel 
+                      value="eventBrand" 
+                      control={<Radio />} 
+                      label="Etkinlik Markası (Etkinlik Oluştur)" 
                     />
                   </RadioGroup>
                 </FormControl>
@@ -225,19 +289,17 @@ function LoginScreen({ onLogin }) {
                     label="Kategori *"
                     required
                   >
-                    <MenuItem value="Kahve">☕ Kahve</MenuItem>
-                    <MenuItem value="Yiyecek">🍽️ Yiyecek</MenuItem>
-                    <MenuItem value="Bar/Pub">🍺 Bar/Pub</MenuItem>
-                    <MenuItem value="Giyim">👕 Giyim</MenuItem>
-                    <MenuItem value="Kuaför">✂️ Kuaför</MenuItem>
-                    <MenuItem value="Spor">✂️ Kuaför</MenuItem>
-
+                    {getCategoryOptions().map((cat) => (
+                      <MenuItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 
                 <Alert severity="info" sx={{ mt: 2 }}>
                   <Typography variant="caption">
-                    ⚠️ <strong>Önemli:</strong> Seçtiğiniz kategori daha sonra değiştirilemez!
+                    <strong>Önemli:</strong> Seçtiğiniz kategori daha sonra değiştirilemez!
                   </Typography>
                 </Alert>
 
@@ -252,7 +314,7 @@ function LoginScreen({ onLogin }) {
                   >
                     {CITIES.map((city) => (
                       <MenuItem key={city} value={city}>
-                        📍 {city}
+                        {city}
                       </MenuItem>
                     ))}
                   </Select>

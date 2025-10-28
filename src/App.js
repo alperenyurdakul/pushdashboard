@@ -11,6 +11,8 @@ import LoginScreen from './screens/LoginScreen';
 import Banners from './pages/Banners';
 import BrandProfile from './pages/BrandProfile';
 import ComingSoon from './pages/ComingSoon';
+import AdminPanel from './pages/AdminPanel';
+import Analytics from './pages/Analytics';
 
 // Import our custom theme
 import customTheme from './theme';
@@ -71,18 +73,37 @@ function App() {
       <Router>
         <Layout currentUser={currentUser} onLogout={handleLogout}>
           <Routes>
-            <Route path="/" element={<Navigate to="/brand-profile" replace />} />
-            <Route path="/brand-profile" element={
-              currentUser?.userType === 'brand' ? 
-                <BrandProfile currentUser={currentUser} setCurrentUser={setCurrentUser} /> : 
-                <Navigate to="/" replace />
-            } />
-            <Route path="/banners" element={
-              currentUser?.userType === 'brand' ? 
-                <Banners currentUser={currentUser} /> : 
-                <Navigate to="/" replace />
-            } />
-            <Route path="*" element={<Navigate to="/brand-profile" replace />} />
+            {/* Admin Route */}
+            {currentUser?.isAdmin && (
+              <>
+                <Route path="/" element={<Navigate to="/admin" replace />} />
+                <Route path="/admin" element={<AdminPanel />} />
+              </>
+            )}
+            
+            {/* Brand Routes */}
+            {!currentUser?.isAdmin && (
+              <>
+                <Route path="/" element={<Navigate to="/brand-profile" replace />} />
+                <Route path="/brand-profile" element={
+                  (currentUser?.userType === 'brand' || currentUser?.userType === 'eventBrand') ? 
+                    <BrandProfile currentUser={currentUser} setCurrentUser={setCurrentUser} /> : 
+                    <Navigate to="/" replace />
+                } />
+                <Route path="/banners" element={
+                  (currentUser?.userType === 'brand' || currentUser?.userType === 'eventBrand') ? 
+                    <Banners currentUser={currentUser} /> : 
+                    <Navigate to="/" replace />
+                } />
+                <Route path="/analytics" element={
+                  (currentUser?.userType === 'brand' || currentUser?.userType === 'eventBrand') ? 
+                    <Analytics currentUser={currentUser} /> : 
+                    <Navigate to="/" replace />
+                } />
+              </>
+            )}
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
       </Router>
