@@ -64,6 +64,7 @@ function Banners({ currentUser }) {
     }
     
     setFormData({
+      title: '',
       campaignDescription: '',
       targetAudience: 'Genel kitle',
       category: defaultCategory, // Kullanıcının kategorisi otomatik seçili
@@ -105,6 +106,7 @@ function Banners({ currentUser }) {
   const getInitialFormData = () => {
     const defaultCategory = currentUser?.category || (currentUser?.userType === 'eventBrand' ? 'Çizim' : 'Kahve');
     return {
+      title: '',
       campaignDescription: '',
       targetAudience: 'Genel kitle',
       category: defaultCategory,
@@ -220,6 +222,15 @@ function Banners({ currentUser }) {
   };
 
   const handleCreateBanner = async () => {
+    if (!formData.title.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Kampanya başlığı gerekli!',
+        severity: 'error'
+      });
+      return;
+    }
+
     if (!formData.campaignDescription.trim()) {
       setSnackbar({
         open: true,
@@ -263,6 +274,7 @@ function Banners({ currentUser }) {
         },
         body: JSON.stringify({
           restaurantName: currentUser.name,
+          title: formData.title,
           campaignDescription: formData.campaignDescription,
           targetAudience: formData.targetAudience,
           location: formData.location,
@@ -798,6 +810,15 @@ function Banners({ currentUser }) {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
+                  label="Kampanya Başlığı"
+                  placeholder="Örnek: Özel İndirim Fırsatı"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                
+                <TextField
+                  fullWidth
                   label="Kampanya Açıklaması"
                   multiline
                   rows={4}
@@ -1274,7 +1295,7 @@ function Banners({ currentUser }) {
           <Button
             onClick={handleCreateBanner}
             variant="contained"
-            disabled={loading || !formData.campaignDescription.trim()}
+            disabled={loading || !formData.title.trim() || !formData.campaignDescription.trim()}
             startIcon={loading ? <CircularProgress size={20} /> : <Create />}
           >
             {loading ? 'Oluşturuluyor...' : 'Banner Oluştur'}
