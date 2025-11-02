@@ -56,6 +56,7 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     'Spor',
     'Tatlı',
     'Mobilya',
+    'Market',
     'Çizim',
     'Boyama'
   ];

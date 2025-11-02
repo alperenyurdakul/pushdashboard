@@ -88,9 +88,35 @@ function AdminPanel() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
+      
+      // Event'leri de al
+      const eventsResponse = await fetch(`${API_CONFIG.BASE_URL}/api/admin/events/pending`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const eventsData = await eventsResponse.json();
+      
+      // Banner'lar ve event'leri birleştir
+      let allPending = [];
       if (data.success) {
-        setPendingBanners(data.data);
+        allPending = [...data.data];
       }
+      if (eventsData.success && eventsData.data.length > 0) {
+        const formattedEvents = eventsData.data.map(event => ({
+          _id: event._id,
+          title: event.title,
+          description: event.description,
+          category: event.category,
+          contentType: 'event',
+          approvalStatus: 'pending',
+          createdAt: event.createdAt,
+          restaurant: { name: event.organizerName },
+          bannerImage: event.bannerImage,
+          isEvent: true
+        }));
+        allPending = [...allPending, ...formattedEvents];
+      }
+      
+      setPendingBanners(allPending);
     } catch (error) {
       console.error('Pending banners yükleme hatası:', error);
     } finally {
@@ -126,9 +152,14 @@ function AdminPanel() {
     }
   };
 
-  const handleApproveBanner = async (bannerId) => {
+  const handleApproveBanner = async (banner) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/admin/banners/${bannerId}/approve`, {
+      const isEvent = banner.isEvent || banner.contentType === 'event';
+      const endpoint = isEvent 
+        ? `${API_CONFIG.BASE_URL}/api/admin/events/${banner._id}/approve`
+        : `${API_CONFIG.BASE_URL}/api/admin/banners/${banner._id}/approve`;
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +169,8 @@ function AdminPanel() {
       const data = await response.json();
       
       if (data.success) {
-        alert('Banner başarıyla onaylandı ve kullanıcılara bildirim gönderildi!');
+        const msg = isEvent ? 'Etkinlik başarıyla onaylandı!' : 'Banner başarıyla onaylandı ve kullanıcılara bildirim gönderildi!';
+        alert(msg);
         loadPendingBanners();
         loadApprovedBanners();
         loadStats();
@@ -146,8 +178,8 @@ function AdminPanel() {
         alert(`Hata: ${data.message}`);
       }
     } catch (error) {
-      console.error('Banner onaylama hatası:', error);
-      alert('Banner onaylanırken hata oluştu!');
+      console.error('Onaylama hatası:', error);
+      alert('Onaylanırken hata oluştu!');
     }
   };
 
@@ -158,7 +190,12 @@ function AdminPanel() {
     }
 
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/admin/banners/${selectedBanner._id}/reject`, {
+      const isEvent = selectedBanner.isEvent || selectedBanner.contentType === 'event';
+      const endpoint = isEvent 
+        ? `${API_CONFIG.BASE_URL}/api/admin/events/${selectedBanner._id}/reject`
+        : `${API_CONFIG.BASE_URL}/api/admin/banners/${selectedBanner._id}/reject`;
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +206,8 @@ function AdminPanel() {
       const data = await response.json();
       
       if (data.success) {
-        alert('Banner reddedildi!');
+        const msg = isEvent ? 'Etkinlik reddedildi!' : 'Banner reddedildi!';
+        alert(msg);
         setRejectDialogOpen(false);
         setRejectReason('');
         setSelectedBanner(null);
@@ -180,8 +218,8 @@ function AdminPanel() {
         alert(`Hata: ${data.message}`);
       }
     } catch (error) {
-      console.error('Banner reddetme hatası:', error);
-      alert('Banner reddedilirken hata oluştu!');
+      console.error('Reddetme hatası:', error);
+      alert('Reddedilirken hata oluştu!');
     }
   };
 
@@ -267,7 +305,7 @@ function AdminPanel() {
                         size="small"
                         color="success"
                         startIcon={<CheckCircle />}
-                        onClick={() => handleApproveBanner(banner._id)}
+                        onClick={() => handleApproveBanner(banner)}
                         sx={{ ml: 1 }}
                       >
                         Onayla

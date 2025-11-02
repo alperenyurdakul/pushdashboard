@@ -81,6 +81,7 @@ function LoginScreen({ onLogin }) {
       { value: 'Spor', label: 'Spor' },
       { value: 'Tatlı', label: 'Tatlı' },
       { value: 'Mobilya', label: 'Mobilya' },
+      { value: 'Market', label: 'Market' },
       { value: 'Çizim', label: 'Çizim' },
       { value: 'Boyama', label: 'Boyama' },
     ];
