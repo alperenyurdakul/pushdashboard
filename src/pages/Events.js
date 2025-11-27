@@ -25,7 +25,7 @@ import {
   CircularProgress,
   Avatar
 } from '@mui/material';
-import { Add, Delete, Visibility, Refresh, CloudUpload, Image } from '@mui/icons-material';
+import { Add, Delete, Visibility, Refresh, CloudUpload, Image, People, CheckCircle, Cancel } from '@mui/icons-material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -36,6 +36,7 @@ const Events = ({ currentUser }) => {
   const [loading, setLoading] = useState(false);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openResultsDialog, setOpenResultsDialog] = useState(false);
+  const [openParticipantsDialog, setOpenParticipantsDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -188,6 +189,46 @@ const Events = ({ currentUser }) => {
       }
     } catch (error) {
       console.error('Sonuçlar getirme hatası:', error);
+    }
+  };
+
+  const handleViewParticipants = async (eventId) => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/events/event/${eventId}`);
+      const data = await response.json();
+      if (data.success) {
+        setSelectedEvent(data.event);
+        setOpenParticipantsDialog(true);
+      }
+    } catch (error) {
+      console.error('Katılımcılar getirme hatası:', error);
+    }
+  };
+
+  const handleApproveParticipant = async (participantId, approved) => {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/api/events/${selectedEvent._id}/participant/${participantId}/approve`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ approved }),
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        alert(approved ? 'Katılımcı onaylandı!' : 'Katılımcı reddedildi!');
+        // Etkinliği yeniden yükle
+        handleViewParticipants(selectedEvent._id);
+      } else {
+        alert('İşlem başarısız: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Katılımcı onay hatası:', error);
+      alert('İşlem başarısız oldu!');
     }
   };
 
@@ -365,6 +406,22 @@ const Events = ({ currentUser }) => {
                     onClick={() => handleViewResults(event._id)}
                   >
                     Sonuçları Gör
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<People />}
+                    onClick={() => handleViewParticipants(event._id)}
+                    color="primary"
+                  >
+                    Katılımcılar
+                    {event.participants && event.participants.length > 0 && (
+                      <Chip 
+                        label={event.participants.length} 
+                        size="small" 
+                        color="primary" 
+                        sx={{ ml: 1 }}
+                      />
+                    )}
                   </Button>
                   <IconButton
                     size="small"
@@ -593,6 +650,144 @@ const Events = ({ currentUser }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenResultsDialog(false)}>Kapat</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Katılımcılar Dialog */}
+      <Dialog open={openParticipantsDialog} onClose={() => setOpenParticipantsDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <People />
+            Etkinlik Katılımcıları
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedEvent && (
+            <Box sx={{ pt: 2 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                {selectedEvent.title}
+              </Typography>
+              
+              {selectedEvent.participants && selectedEvent.participants.length > 0 ? (
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Kullanıcı</TableCell>
+                        <TableCell>Telefon</TableCell>
+                        <TableCell>Katılım Tarihi</TableCell>
+                        <TableCell align="center">Durum</TableCell>
+                        <TableCell align="center">İşlemler</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedEvent.participants.map((participant) => (
+                        <TableRow key={participant._id}>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar sx={{ width: 32, height: 32 }}>
+                                {participant.userName?.charAt(0) || '?'}
+                              </Avatar>
+                              {participant.userName || 'Bilinmeyen'}
+                            </Box>
+                          </TableCell>
+                          <TableCell>{participant.phone || '-'}</TableCell>
+                          <TableCell>
+                            {participant.joinedAt 
+                              ? new Date(participant.joinedAt).toLocaleString('tr-TR')
+                              : '-'
+                            }
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={
+                                participant.status === 'pending' ? 'Bekliyor' :
+                                participant.status === 'approved' ? 'Onaylandı' :
+                                participant.status === 'rejected' ? 'Reddedildi' :
+                                'Bilinmiyor'
+                              }
+                              color={
+                                participant.status === 'pending' ? 'warning' :
+                                participant.status === 'approved' ? 'success' :
+                                participant.status === 'rejected' ? 'error' :
+                                'default'
+                              }
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            {participant.status === 'pending' && (
+                              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                <IconButton
+                                  size="small"
+                                  color="success"
+                                  onClick={() => handleApproveParticipant(participant._id, true)}
+                                  title="Onayla"
+                                >
+                                  <CheckCircle />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleApproveParticipant(participant._id, false)}
+                                  title="Reddet"
+                                >
+                                  <Cancel />
+                                </IconButton>
+                              </Box>
+                            )}
+                            {participant.status === 'approved' && (
+                              <Typography variant="body2" color="success.main">
+                                ✓ Onaylandı
+                              </Typography>
+                            )}
+                            {participant.status === 'rejected' && (
+                              <Typography variant="body2" color="error.main">
+                                ✗ Reddedildi
+                              </Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <People sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="body1" color="text.secondary">
+                    Henüz katılımcı yok
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Özet Bilgiler */}
+              {selectedEvent.participants && selectedEvent.participants.length > 0 && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    📊 Katılımcı İstatistikleri
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
+                    <Typography variant="body2">
+                      Toplam: <strong>{selectedEvent.participants.length}</strong>
+                    </Typography>
+                    <Typography variant="body2">
+                      Bekleyen: <strong>{selectedEvent.participants.filter(p => p.status === 'pending').length}</strong>
+                    </Typography>
+                    <Typography variant="body2" color="success.main">
+                      Onaylı: <strong>{selectedEvent.participants.filter(p => p.status === 'approved').length}</strong>
+                    </Typography>
+                    <Typography variant="body2" color="error.main">
+                      Reddedilen: <strong>{selectedEvent.participants.filter(p => p.status === 'rejected').length}</strong>
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenParticipantsDialog(false)}>Kapat</Button>
         </DialogActions>
       </Dialog>
     </Box>

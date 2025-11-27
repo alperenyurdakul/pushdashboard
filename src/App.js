@@ -20,6 +20,7 @@ import customTheme from './theme';
 // Import feature flags
 import FEATURES from './config/features';
 
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -46,6 +47,7 @@ function App() {
     setCurrentUser(null);
     setIsLoggedIn(false);
   };
+
 
   // "Çok Yakında" sayfası aktifse onu göster
   if (FEATURES.SHOW_COMING_SOON) {
@@ -88,17 +90,17 @@ function App() {
                 <Route path="/brand-profile" element={
                   (currentUser?.userType === 'brand' || currentUser?.userType === 'eventBrand') ? 
                     <BrandProfile currentUser={currentUser} setCurrentUser={setCurrentUser} /> : 
-                    <Navigate to="/" replace />
+                    <Navigate to="/brand-profile" replace />
                 } />
                 <Route path="/banners" element={
                   (currentUser?.userType === 'brand' || currentUser?.userType === 'eventBrand') ? 
                     <Banners currentUser={currentUser} /> : 
-                    <Navigate to="/" replace />
+                    <Navigate to="/brand-profile" replace />
                 } />
                 <Route path="/analytics" element={
                   (currentUser?.userType === 'brand' || currentUser?.userType === 'eventBrand') ? 
                     <Analytics currentUser={currentUser} /> : 
-                    <Navigate to="/" replace />
+                    <Navigate to="/brand-profile" replace />
                 } />
               </>
             )}

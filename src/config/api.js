@@ -8,7 +8,8 @@ const API_CONFIG = {
   // API Base URL - otomatik oluşturulur
   get BASE_URL() {
     const protocol = this.USE_HTTPS ? 'https' : 'http';
-    const url = `${protocol}://${this.SERVER_IP}:${this.PORT}`;
+    const port = this.PORT ? `:${this.PORT}` : '';
+    const url = `${protocol}://${this.SERVER_IP}${port}`;
     console.log('🔗 Dashboard API URL:', url); // Debug için
     return url;
   }

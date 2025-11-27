@@ -1,26 +1,26 @@
 import { createTheme } from '@mui/material/styles';
 
-// Modern Dashboard Theme - Görseldeki tasarıma göre
+// Modern Dashboard Theme - Mobil tema renkleriyle hizalı
 const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#28A745', // Yeşil (#28A745)
-      light: '#E6F7ED', // Açık yeşil (#E6F7ED)
-      dark: '#1E7E34',
+      main: '#ff615e', // Mobil primary
+      light: '#ff8582', // Mobil primaryLight
+      dark: '#ff3d3a', // Mobil primaryDark
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#6C757D',
-      light: '#E9ECEF',
+      main: '#34495E', // Mobil secondary
+      light: '#5D6D7E',
     },
     background: {
-      default: '#F8F9FA', // Ana arka plan rengi
-      paper: '#FFFFFF', // Kartlar ve sidebar
+      default: '#f0f0f3', // Mobil background
+      paper: '#FFFFFF',
     },
     text: {
-      primary: '#212529', // Ana metin rengi
-      secondary: '#6C757D', // İkincil metin rengi
+      primary: '#2C3E50',
+      secondary: '#7F8C8D',
       disabled: '#ADB5BD',
     },
     warning: {
@@ -31,9 +31,9 @@ const theme = createTheme({
       main: '#DC3545',
     },
     success: {
-      main: '#28A745',
+      main: '#ff615e', // Mobil success da aynı tonda tutuluyor
     },
-    divider: '#E9ECEF',
+    divider: '#E5E7EB',
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -137,18 +137,18 @@ const theme = createTheme({
           },
         },
         contained: {
-          backgroundColor: '#28A745',
+          backgroundColor: '#ff615e',
           '&:hover': {
-            backgroundColor: '#1E7E34',
+            backgroundColor: '#ff3d3a',
           },
         },
         outlined: {
-          borderColor: '#E9ECEF',
-          color: '#6C757D',
+          borderColor: '#E5E7EB',
+          color: '#34495E',
           '&:hover': {
-            borderColor: '#28A745',
-            color: '#28A745',
-            backgroundColor: '#E6F7ED',
+            borderColor: '#ff615e',
+            color: '#ff615e',
+            backgroundColor: '#ffefeE',
           },
         },
       },
@@ -158,7 +158,7 @@ const theme = createTheme({
         root: {
           borderRadius: 12,
           boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #E9ECEF',
+          border: '1px solid #E5E7EB',
         },
       },
     },
@@ -169,13 +169,13 @@ const theme = createTheme({
             borderRadius: 8,
             backgroundColor: '#FFFFFF',
             '& fieldset': {
-              borderColor: '#E9ECEF',
+              borderColor: '#E5E7EB',
             },
             '&:hover fieldset': {
-              borderColor: '#28A745',
+              borderColor: '#ff615e',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#28A745',
+              borderColor: '#ff615e',
               borderWidth: 2,
             },
           },
@@ -210,13 +210,13 @@ const theme = createTheme({
           borderRadius: 8,
           margin: '4px 8px',
           '&.Mui-selected': {
-            backgroundColor: '#E6F7ED',
-            color: '#28A745',
+            backgroundColor: '#ffefeE',
+            color: '#ff615e',
             '&:hover': {
-              backgroundColor: '#E6F7ED',
+              backgroundColor: '#ffefeE',
             },
             '& .MuiListItemIcon-root': {
-              color: '#28A745',
+              color: '#ff615e',
             },
             '& .MuiListItemText-primary': {
               fontWeight: 600,
@@ -229,9 +229,9 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: '#FFFFFF',
-          color: '#212529',
+          color: '#2C3E50',
           boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.12)',
-          borderBottom: '1px solid #E9ECEF',
+          borderBottom: '1px solid #E5E7EB',
         },
       },
     },
@@ -239,7 +239,7 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           backgroundColor: '#FFFFFF',
-          borderRight: '1px solid #E9ECEF',
+          borderRight: '1px solid #E5E7EB',
           boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.1)',
         },
       },

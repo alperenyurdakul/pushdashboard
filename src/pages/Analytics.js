@@ -1,65 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Typography,
   Card,
   CardContent,
+  Typography,
   Grid,
   CircularProgress,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Paper,
-  Divider,
+  Chip,
+  LinearProgress,
 } from '@mui/material';
 import {
+  Visibility,
+  Mouse,
+  QrCode,
   TrendingUp,
   People,
-  MonetizationOn,
-  Discount,
-  Assessment,
+  Campaign,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
 import API_CONFIG from '../config/api';
 
 function Analytics({ currentUser }) {
-  const [analytics, setAnalytics] = useState(null);
-  const [dailyData, setDailyData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(0);
+  const [overviewData, setOverviewData] = useState(null);
+  const [bannerStats, setBannerStats] = useState(null);
+  const [qrStats, setQrStats] = useState(null);
+  const [days, setDays] = useState(30);
 
   useEffect(() => {
     if (currentUser) {
-      loadAnalytics();
-      loadDailyData();
+      loadAllData();
     }
-  }, [currentUser]);
+  }, [currentUser, days]);
 
-  const loadAnalytics = async () => {
+  const loadAllData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/analytics/brand-weekly`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setAnalytics(data.data);
-        console.log('📊 Analytics yüklendi:', data.data);
-      }
+      const token = localStorage.getItem('userToken');
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      const [overviewRes, bannerRes, qrRes] = await Promise.all([
+        fetch(`${API_CONFIG.BASE_URL}/api/analytics/overview?days=${days}`, { headers }),
+        fetch(`${API_CONFIG.BASE_URL}/api/analytics/banner-stats?days=${days}`, { headers }),
+        fetch(`${API_CONFIG.BASE_URL}/api/analytics/qr-stats?days=${days}`, { headers }),
+      ]);
+
+      const [overviewData, bannerData, qrData] = await Promise.all([
+        overviewRes.json(),
+        bannerRes.json(),
+        qrRes.json(),
+      ]);
+
+      if (overviewData.success) setOverviewData(overviewData.data);
+      if (bannerData.success) setBannerStats(bannerData.data);
+      if (qrData.success) setQrStats(qrData.data);
     } catch (error) {
       console.error('Analytics yükleme hatası:', error);
     } finally {
@@ -67,420 +75,491 @@ function Analytics({ currentUser }) {
     }
   };
 
-  const loadDailyData = async () => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/analytics/brand-daily?days=7`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Grafik için veri formatla
-        const formattedData = Object.entries(data.data.dailyStats)
-          .map(([date, stats]) => ({
-            date: new Date(date).toLocaleDateString('tr-TR', { weekday: 'short', day: 'numeric', month: 'short' }),
-            codes: stats.codes,
-            used: stats.used,
-            revenue: stats.revenue,
-            discount: stats.discount
-          }))
-          .reverse(); // Eski tarihler solda olsun
-        
-        setDailyData(formattedData);
-        console.log('📈 Günlük data yüklendi:', formattedData);
-      }
-    } catch (error) {
-      console.error('Daily data yükleme hatası:', error);
-    }
-  };
-
-  const COLORS = ['#28A745', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'];
+  const StatCard = ({ icon, title, value, subtitle, color = '#ef4444' }) => (
+    <Card
+      sx={{
+        background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+        color: 'white',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0px 12px 24px rgba(0, 0, 0, 0.15)',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -20,
+          right: -20,
+          width: 120,
+          height: 120,
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+        }}
+      />
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              background: 'rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {React.cloneElement(icon, { sx: { fontSize: 28, color: 'white' } })}
+          </Box>
+        </Box>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+          {value}
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="caption" sx={{ opacity: 0.8 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <CircularProgress />
       </Box>
     );
   }
 
-  if (!analytics) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <Typography variant="h6" color="textSecondary">
-          Analitik verileri yüklenemedi
-        </Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
-        <Assessment sx={{ mr: 2, fontSize: 32, color: '#28A745' }} />
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-          İstatistikler ve Analitik
-        </Typography>
+    <Box sx={{ p: 4, backgroundColor: '#f8fafc', minHeight: '100vh', width: '100%' }}>
+      <Box sx={{ maxWidth: '1400px', mx: 'auto', width: '100%' }}>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1e293b', mb: 1 }}>
+            İstatistikler
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#64748b' }}>
+            Kampanyalarınızın performansını takip edin
+          </Typography>
+        </Box>
+
+        {/* Period Selector */}
+        <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
+          {[7, 30, 90].map((d) => (
+            <Chip
+              key={d}
+              label={`Son ${d} Gün`}
+              onClick={() => setDays(d)}
+              color={days === d ? 'primary' : 'default'}
+              sx={{
+                cursor: 'pointer',
+                backgroundColor: days === d ? '#ef4444' : 'white',
+                color: days === d ? 'white' : '#64748b',
+                '&:hover': {
+                  backgroundColor: days === d ? '#dc2626' : '#f1f5f9',
+                },
+              }}
+            />
+          ))}
+        </Box>
+
+        {/* Overview Stats */}
+        {overviewData && (
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                icon={<Visibility />}
+                title="Toplam Görüntülenme"
+                value={overviewData.clicks.views.toLocaleString()}
+                subtitle={`${days} gün içinde`}
+                color="#3b82f6"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                icon={<Mouse />}
+                title="Toplam Tıklama"
+                value={overviewData.clicks.clicks.toLocaleString()}
+                subtitle={`%${overviewData.clicks.clickThroughRate} tıklama oranı`}
+                color="#ef4444"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                icon={<QrCode />}
+                title="QR Kod Oluşturuldu"
+                value={overviewData.qrCodes.generated.toLocaleString()}
+                subtitle={`${overviewData.qrCodes.used} kullanıldı`}
+                color="#10b981"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                icon={<TrendingUp />}
+                title="QR Kod Dönüşüm Oranı"
+                value={`%${overviewData.qrCodes.conversionRate}`}
+                subtitle={`${overviewData.qrCodes.used}/${overviewData.qrCodes.generated} kullanıldı`}
+                color="#f59e0b"
+              />
+            </Grid>
+          </Grid>
+        )}
+
+        {/* Tabs */}
+        <Card sx={{ mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            sx={{
+              borderBottom: '1px solid #e2e8f0',
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 500,
+                fontSize: '0.95rem',
+              },
+            }}
+          >
+            <Tab label="Banner Tıklamaları" />
+            <Tab label="QR Kod İstatistikleri" />
+            <Tab label="Genel Bakış" />
+          </Tabs>
+        </Card>
+
+        {/* Tab Content */}
+        {activeTab === 0 && bannerStats && (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                Banner Tıklamaları Detayları
+              </Typography>
+
+              {/* Summary */}
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 2, backgroundColor: '#eff6ff', borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                      Toplam Görüntülenme
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#3b82f6' }}>
+                      {bannerStats.totals.views.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 2, backgroundColor: '#fef2f2', borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                      Toplam Tıklama
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#ef4444' }}>
+                      {bannerStats.totals.clicks.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 2, backgroundColor: '#f0fdf4', borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                      Tıklama Oranı
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#10b981' }}>
+                      %{bannerStats.totals.clickThroughRate}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+
+              {/* Banner List */}
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Banner Bazında İstatistikler
+              </Typography>
+              <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #e2e8f0' }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: '#f8fafc' }}>
+                      <TableCell sx={{ fontWeight: 600 }}>Banner Adı</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Görüntülenme</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Tıklama</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Beğeni</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Paylaşım</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Arama</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Yol Tarifi</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {bannerStats.byBanner.length > 0 ? (
+                      bannerStats.byBanner.map((banner) => (
+                        <TableRow key={banner.bannerId} hover>
+                          <TableCell>{banner.bannerTitle}</TableCell>
+                          <TableCell align="right">{banner.views || 0}</TableCell>
+                          <TableCell align="right">{banner.clicks || 0}</TableCell>
+                          <TableCell align="right">{banner.likes || 0}</TableCell>
+                          <TableCell align="right">{banner.shares || 0}</TableCell>
+                          <TableCell align="right">{banner.calls || 0}</TableCell>
+                          <TableCell align="right">{banner.directions || 0}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                          <Typography variant="body2" sx={{ color: '#64748b' }}>
+                            Henüz banner tıklaması kaydı bulunmuyor
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 1 && qrStats && (
+          <Card>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                QR Kod İstatistikleri Detayları
+              </Typography>
+
+              {/* Summary */}
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} md={3}>
+                  <Box sx={{ p: 2, backgroundColor: '#f0fdf4', borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                      Oluşturulan
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#10b981' }}>
+                      {qrStats.totals.generated.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Box sx={{ p: 2, backgroundColor: '#eff6ff', borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                      Kullanılan
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#3b82f6' }}>
+                      {qrStats.totals.used.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Box sx={{ p: 2, backgroundColor: '#fffbeb', borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                      Kullanılmayan
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#f59e0b' }}>
+                      {qrStats.totals.unused.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Box sx={{ p: 2, backgroundColor: '#fef2f2', borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                      Dönüşüm Oranı
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#ef4444' }}>
+                      %{qrStats.totals.conversionRate}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+
+              {/* Banner List */}
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Banner Bazında QR Kod İstatistikleri
+              </Typography>
+              <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #e2e8f0' }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: '#f8fafc' }}>
+                      <TableCell sx={{ fontWeight: 600 }}>Banner Adı</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Oluşturulan</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Kullanılan</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Kullanılmayan</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Dönüşüm Oranı</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {qrStats.byBanner.length > 0 ? (
+                      qrStats.byBanner.map((banner) => (
+                        <TableRow key={banner.bannerId} hover>
+                          <TableCell>{banner.bannerTitle}</TableCell>
+                          <TableCell align="right">{banner.generated}</TableCell>
+                          <TableCell align="right">
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                              {banner.used}
+                              <CheckCircle sx={{ fontSize: 16, color: '#10b981' }} />
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                              {banner.unused}
+                              <Cancel sx={{ fontSize: 16, color: '#ef4444' }} />
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <LinearProgress
+                                variant="determinate"
+                                value={banner.conversionRate}
+                                sx={{
+                                  width: 100,
+                                  height: 8,
+                                  borderRadius: 4,
+                                  backgroundColor: '#e2e8f0',
+                                  '& .MuiLinearProgress-bar': {
+                                    backgroundColor: banner.conversionRate > 50 ? '#10b981' : '#f59e0b',
+                                    borderRadius: 4,
+                                  },
+                                }}
+                              />
+                              <Typography variant="body2" sx={{ minWidth: 45, fontWeight: 600 }}>
+                                %{banner.conversionRate}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                          <Typography variant="body2" sx={{ color: '#64748b' }}>
+                            Henüz QR kod oluşturulmamış
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 2 && overviewData && (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent sx={{ p: 4 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                    Banner İstatistikleri
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Toplam Banner
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {overviewData.banners.total}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Aktif Banner
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#10b981' }}>
+                        {overviewData.banners.active}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Toplam Görüntülenme
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {overviewData.clicks.views.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Toplam Tıklama
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#ef4444' }}>
+                        {overviewData.clicks.clicks.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Tıklama Oranı
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#3b82f6' }}>
+                        %{overviewData.clicks.clickThroughRate}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Benzersiz Kullanıcı
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {overviewData.clicks.uniqueUsers}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent sx={{ p: 4 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                    QR Kod İstatistikleri
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Oluşturulan QR Kod
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {overviewData.qrCodes.generated.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Kullanılan QR Kod
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#10b981' }}>
+                        {overviewData.qrCodes.used.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Kullanılmayan QR Kod
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#f59e0b' }}>
+                        {overviewData.qrCodes.unused.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Dönüşüm Oranı
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#ef4444' }}>
+                        %{overviewData.qrCodes.conversionRate}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#64748b' }}>
+                        Benzersiz Kullanıcı
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {overviewData.qrCodes.uniqueUsers}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        )}
       </Box>
-
-      {/* Özet Kartlar */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    Toplam Kod
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 'bold', my: 1, color: 'white' }}>
-                    {analytics.codes.total}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    {analytics.codes.used} kullanıldı
-                  </Typography>
-                </Box>
-                <TrendingUp sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    Toplam Ciro
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 'bold', my: 1, color: 'white' }}>
-                    {analytics.revenue.totalRevenue.toFixed(0)}₺
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    İndirimli
-                  </Typography>
-                </Box>
-                <MonetizationOn sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    Toplam İndirim
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 'bold', my: 1, color: 'white' }}>
-                    {analytics.revenue.totalDiscountGiven.toFixed(0)}₺
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    Verilen
-                  </Typography>
-                </Box>
-                <Discount sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    Müşteri
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 'bold', my: 1, color: 'white' }}>
-                    {analytics.customers.usedCode}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'white', fontWeight: 500 }}>
-                    Kullanan
-                  </Typography>
-                </Box>
-                <People sx={{ fontSize: 48, opacity: 0.3 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Detaylı İstatistikler */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                📈 Dönüşüm Oranı
-              </Typography>
-              <Box sx={{ textAlign: 'center', py: 3 }}>
-                <Typography variant="h2" color="primary" sx={{ fontWeight: 'bold' }}>
-                  %{analytics.codes.conversionRate}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Kod Oluşturma → Kullanım
-                </Typography>
-                <Typography variant="caption" color="textSecondary" sx={{ mt: 2, display: 'block' }}>
-                  {analytics.codes.total} koddan {analytics.codes.used} tanesi kullanıldı
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {analytics.revenue.totalOriginalAmount > 0 && (
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                  💰 Gelir Özeti
-                </Typography>
-                <Box sx={{ py: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant="body2">Toplam Hesap (İndirimsiz):</Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {analytics.revenue.totalOriginalAmount.toFixed(2)} ₺
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant="body2" color="error">Verilen İndirim:</Typography>
-                    <Typography variant="body1" fontWeight="bold" color="error">
-                      -{analytics.revenue.totalDiscountGiven.toFixed(2)} ₺
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ my: 1 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body1" fontWeight="bold">Net Ciro:</Typography>
-                    <Typography variant="h6" fontWeight="bold" color="success.main">
-                      {analytics.revenue.totalRevenue.toFixed(2)} ₺
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-
-      {/* Grafikler */}
-      <Grid container spacing={3}>
-        {/* Günlük Kod Kullanımı */}
-        <Grid item xs={12} lg={8}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Günlük Kod Kullanımı (Son 7 Gün)
-            </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="codes" 
-                  stroke="#8884d8" 
-                  name="Oluşturulan Kod"
-                  strokeWidth={2}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="used" 
-                  stroke="#82ca9d" 
-                  name="Kullanılan Kod"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Gelir Grafiği */}
-        <Grid item xs={12} lg={4}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Gelir Dağılımı
-            </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Net Ciro', value: analytics.revenue.totalRevenue },
-                    { name: 'Verilen İndirim', value: analytics.revenue.totalDiscountGiven },
-                  ]}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: %${(percent * 100).toFixed(0)}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  <Cell fill="#28A745" />
-                  <Cell fill="#FF6384" />
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Günlük Gelir */}
-        {dailyData.some(d => d.revenue > 0) && (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Günlük Ciro ve İndirim
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={dailyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="revenue" fill="#28A745" name="Ciro (₺)" />
-                  <Bar dataKey="discount" fill="#FF6384" name="İndirim (₺)" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Paper>
-          </Grid>
-        )}
-
-        {/* En İyi Kampanya */}
-        {analytics.campaigns.topCampaign && (
-          <Grid item xs={12} md={6}>
-            <Card sx={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white'
-            }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'white' }}>
-                  En Popüler Kampanya
-                </Typography>
-                <Typography variant="h5" sx={{ my: 2, fontWeight: 'bold', color: 'white' }}>
-                  {analytics.campaigns.topCampaign.title}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'white', fontWeight: 500 }}>
-                  {analytics.campaigns.topCampaign.usage} kez kullanıldı
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 500 }}>
-                  Tip: {analytics.campaigns.topCampaign.offerType === 'percentage' && 'Yüzde İndirim'}
-                  {analytics.campaigns.topCampaign.offerType === 'fixedPrice' && 'Sabit Fiyat'}
-                  {analytics.campaigns.topCampaign.offerType === 'freeItem' && 'Bedava Ürün'}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* Kampanya Tipleri Dağılımı */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Kampanya Tipleri
-              </Typography>
-              <Box sx={{ py: 2 }}>
-                {Object.entries(analytics.campaigns.offerTypeDistribution).map(([type, count]) => (
-                  <Box key={type} sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2">
-                        {type === 'percentage' && 'Yüzde İndirim'}
-                        {type === 'fixedPrice' && 'Sabit Fiyat'}
-                        {type === 'freeItem' && 'Bedava Ürün'}
-                      </Typography>
-                      <Typography variant="body2" fontWeight="bold">
-                        {count} kampanya
-                      </Typography>
-                    </Box>
-                    <Box sx={{ 
-                      width: '100%', 
-                      height: 8, 
-                      bgcolor: '#E9ECEF', 
-                      borderRadius: 1 
-                    }}>
-                      <Box sx={{ 
-                        width: `${(count / analytics.campaigns.total) * 100}%`, 
-                        height: '100%', 
-                        bgcolor: '#28A745', 
-                        borderRadius: 1 
-                      }} />
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Müşteri İstatistikleri */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                📱 Toplam Unique Müşteri
-              </Typography>
-              <Typography variant="h4">
-                {analytics.customers.totalUnique}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                ✅ Kod Kullanan Müşteri
-              </Typography>
-              <Typography variant="h4" color="success.main">
-                {analytics.customers.usedCode}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                🎯 Aktif Kampanya
-              </Typography>
-              <Typography variant="h4" color="primary">
-                {analytics.campaigns.active}
-              </Typography>
-              <Typography variant="caption" color="textSecondary">
-                / {analytics.campaigns.total} toplam
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
     </Box>
   );
 }

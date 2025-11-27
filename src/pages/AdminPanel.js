@@ -1,84 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Alert,
-  Tabs,
-  Tab,
-  CircularProgress,
-} from '@mui/material';
-import {
-  CheckCircle,
-  Cancel,
-  Schedule,
-  Visibility,
-} from '@mui/icons-material';
+import './AdminPanel.css';
 import API_CONFIG from '../config/api';
 
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`admin-tabpanel-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
 function AdminPanel() {
-  const [tabValue, setTabValue] = useState(0);
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved', 'rejected', 'all'
   const [pendingBanners, setPendingBanners] = useState([]);
   const [approvedBanners, setApprovedBanners] = useState([]);
   const [rejectedBanners, setRejectedBanners] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [allBanners, setAllBanners] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedBanner, setSelectedBanner] = useState(null);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   const token = localStorage.getItem('userToken');
 
   useEffect(() => {
-    loadStats();
-    loadPendingBanners();
-    loadApprovedBanners();
-    loadRejectedBanners();
+    loadAllData();
   }, []);
 
-  const loadStats = async () => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/admin/stats`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setStats(data.data);
-      }
-    } catch (error) {
-      console.error('İstatistik yükleme hatası:', error);
-    }
+  const loadAllData = async () => {
+    await Promise.all([
+      loadPendingBanners(),
+      loadApprovedBanners(),
+      loadRejectedBanners(),
+      loadAllBanners()
+    ]);
   };
 
   const loadPendingBanners = async () => {
@@ -103,13 +52,15 @@ function AdminPanel() {
       if (eventsData.success && eventsData.data.length > 0) {
         const formattedEvents = eventsData.data.map(event => ({
           _id: event._id,
-          title: event.title,
-          description: event.description,
+          title: event.title || event.eventTitle,
+          description: event.description || event.eventDescription,
           category: event.category,
           contentType: 'event',
           approvalStatus: 'pending',
           createdAt: event.createdAt,
-          restaurant: { name: event.organizerName },
+          startDate: event.startDate,
+          endDate: event.endDate,
+          restaurant: { name: event.organizerName || 'Kullanıcı' },
           bannerImage: event.bannerImage,
           isEvent: true
         }));
@@ -118,7 +69,7 @@ function AdminPanel() {
       
       setPendingBanners(allPending);
     } catch (error) {
-      console.error('Pending banners yükleme hatası:', error);
+      console.error('Pending yükleme hatası:', error);
     } finally {
       setLoading(false);
     }
@@ -134,7 +85,7 @@ function AdminPanel() {
         setApprovedBanners(data.data);
       }
     } catch (error) {
-      console.error('Approved banners yükleme hatası:', error);
+      console.error('Approved yükleme hatası:', error);
     }
   };
 
@@ -148,11 +99,27 @@ function AdminPanel() {
         setRejectedBanners(data.data);
       }
     } catch (error) {
-      console.error('Rejected banners yükleme hatası:', error);
+      console.error('Rejected yükleme hatası:', error);
+    }
+  };
+
+  const loadAllBanners = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/admin/banners/all`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAllBanners(data.data);
+      }
+    } catch (error) {
+      console.error('All banners yükleme hatası:', error);
     }
   };
 
   const handleApproveBanner = async (banner) => {
+    if (!window.confirm('Bu içeriği onaylamak istediğinize emin misiniz?')) return;
+
     try {
       const isEvent = banner.isEvent || banner.contentType === 'event';
       const endpoint = isEvent 
@@ -169,11 +136,8 @@ function AdminPanel() {
       const data = await response.json();
       
       if (data.success) {
-        const msg = isEvent ? 'Etkinlik başarıyla onaylandı!' : 'Banner başarıyla onaylandı ve kullanıcılara bildirim gönderildi!';
-        alert(msg);
-        loadPendingBanners();
-        loadApprovedBanners();
-        loadStats();
+        alert(isEvent ? 'Etkinlik başarıyla onaylandı!' : 'Kampanya başarıyla onaylandı!');
+        loadAllData();
       } else {
         alert(`Hata: ${data.message}`);
       }
@@ -206,14 +170,11 @@ function AdminPanel() {
       const data = await response.json();
       
       if (data.success) {
-        const msg = isEvent ? 'Etkinlik reddedildi!' : 'Banner reddedildi!';
-        alert(msg);
-        setRejectDialogOpen(false);
+        alert(isEvent ? 'Etkinlik reddedildi!' : 'Kampanya reddedildi!');
+        setRejectModalOpen(false);
         setRejectReason('');
         setSelectedBanner(null);
-        loadPendingBanners();
-        loadRejectedBanners();
-        loadStats();
+        loadAllData();
       } else {
         alert(`Hata: ${data.message}`);
       }
@@ -223,294 +184,411 @@ function AdminPanel() {
     }
   };
 
-  const openRejectDialog = (banner) => {
+  const openRejectModal = (banner) => {
     setSelectedBanner(banner);
-    setRejectDialogOpen(true);
+    setRejectModalOpen(true);
   };
 
-  const openDetailDialog = (banner) => {
+  const openDetailModal = (banner) => {
     setSelectedBanner(banner);
-    setDetailDialogOpen(true);
+    setDetailModalOpen(true);
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
   };
 
-  const renderBannerTable = (banners, showActions = false) => (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Başlık</TableCell>
-            <TableCell>Marka</TableCell>
-            <TableCell>Kategori</TableCell>
-            <TableCell>Tür</TableCell>
-            <TableCell>Oluşturulma</TableCell>
-            <TableCell align="center">İşlemler</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {banners.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} align="center">
-                <Typography color="textSecondary">Banner bulunamadı</Typography>
-              </TableCell>
-            </TableRow>
-          ) : (
-            banners.map((banner) => (
-              <TableRow key={banner._id}>
-                <TableCell>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {banner.title}
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {banner.description}
-                  </Typography>
-                </TableCell>
-                <TableCell>{banner.restaurant?.name || '-'}</TableCell>
-                <TableCell>
-                  <Chip label={banner.category} size="small" />
-                </TableCell>
-                <TableCell>
-                  <Chip 
-                    label={banner.contentType === 'event' ? 'Etkinlik' : 'Kampanya'} 
-                    size="small" 
-                    color={banner.contentType === 'event' ? 'secondary' : 'primary'}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography variant="caption">
-                    {formatDate(banner.createdAt)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Button
-                    size="small"
-                    startIcon={<Visibility />}
-                    onClick={() => openDetailDialog(banner)}
-                  >
-                    Detay
-                  </Button>
-                  {showActions && (
-                    <>
-                      <Button
-                        size="small"
-                        color="success"
-                        startIcon={<CheckCircle />}
-                        onClick={() => handleApproveBanner(banner)}
-                        sx={{ ml: 1 }}
-                      >
-                        Onayla
-                      </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        startIcon={<Cancel />}
-                        onClick={() => openRejectDialog(banner)}
-                        sx={{ ml: 1 }}
-                      >
-                        Reddet
-                      </Button>
-                    </>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+  const formatDateRange = (startDate, endDate) => {
+    if (!startDate || !endDate) return '-';
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  };
+
+  const getBannerImageUrl = (banner) => {
+    if (!banner.bannerImage) return 'https://via.placeholder.com/400x225';
+    if (banner.bannerImage.startsWith('http')) return banner.bannerImage;
+    return `${API_CONFIG.BASE_URL}/${banner.bannerImage}`;
+  };
+
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: { text: 'Onay Bekliyor', class: 'badge-pending' },
+      approved: { text: 'Onaylandı', class: 'badge-approved' },
+      rejected: { text: 'Reddedildi', class: 'badge-rejected' }
+    };
+    return badges[status] || badges.pending;
+  };
+
+  const filterBanners = (banners) => {
+    if (!searchQuery.trim()) return banners;
+    
+    const query = searchQuery.toLowerCase();
+    return banners.filter(banner => 
+      banner.title?.toLowerCase().includes(query) ||
+      banner.restaurant?.name?.toLowerCase().includes(query) ||
+      banner.category?.toLowerCase().includes(query)
+    );
+  };
+
+  const getCurrentBanners = () => {
+    switch (activeTab) {
+      case 'pending':
+        return filterBanners(pendingBanners);
+      case 'approved':
+        return filterBanners(approvedBanners);
+      case 'rejected':
+        return filterBanners(rejectedBanners);
+      case 'all':
+        return filterBanners(allBanners);
+      default:
+        return [];
+    }
+  };
+
+  const currentBanners = getCurrentBanners();
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
-        Admin Panel
-      </Typography>
+    <div className="admin-container">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-content">
+          <div className="sidebar-header">
+            <div className="admin-avatar">
+              <span className="admin-avatar-text">AD</span>
+            </div>
+            <div className="admin-info">
+              <h1 className="admin-name">Admin</h1>
+              <p className="admin-role">Yönetici</p>
+            </div>
+          </div>
 
-      {/* İstatistikler */}
-      {stats && (
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Bekleyen Banner
-                </Typography>
-                <Typography variant="h4" color="warning.main">
-                  {stats.banners.pending}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Onaylanan Banner
-                </Typography>
-                <Typography variant="h4" color="success.main">
-                  {stats.banners.approved}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Reddedilen Banner
-                </Typography>
-                <Typography variant="h4" color="error.main">
-                  {stats.banners.rejected}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Toplam Marka
-                </Typography>
-                <Typography variant="h4">
-                  {stats.users.brands}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+          <nav className="sidebar-nav">
+            <a href="#" className="nav-item">
+              <span className="material-icons">dashboard</span>
+              <p>Dashboard</p>
+            </a>
+            <a href="#" className="nav-item active">
+              <span className="material-icons">task_alt</span>
+              <p>Onay Yönetimi</p>
+            </a>
+            <a href="#" className="nav-item">
+              <span className="material-icons">storefront</span>
+              <p>İşletmeler</p>
+            </a>
+            <a href="#" className="nav-item">
+              <span className="material-icons">group</span>
+              <p>Kullanıcılar</p>
+            </a>
+            <a href="#" className="nav-item">
+              <span className="material-icons">settings</span>
+              <p>Ayarlar</p>
+            </a>
+          </nav>
+        </div>
+
+        <div className="sidebar-footer">
+          <button className="btn-primary-full">Yeni Ekle</button>
+          <div className="sidebar-footer-links">
+            <a href="#" className="footer-link">
+              <span className="material-icons">help</span>
+              <p>Yardım</p>
+            </a>
+            <a href="#" className="footer-link" onClick={() => {
+              localStorage.removeItem('userToken');
+              window.location.href = '/login';
+            }}>
+              <span className="material-icons">logout</span>
+              <p>Çıkış Yap</p>
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        <div className="content-wrapper">
+          {/* Page Heading */}
+          <div className="page-header">
+            <div>
+              <h1 className="page-title">Kampanya & Etkinlik Yönetimi</h1>
+              <p className="page-subtitle">İşletmeler tarafından gönderilen kampanya ve etkinlikleri yönetin.</p>
+            </div>
+            <div>
+              <button 
+                className="btn-primary-full"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`${API_CONFIG.BASE_URL}/api/admin/test/batch-trigger`, {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                      alert('✅ Batch başarıyla tetiklendi! Backend loglarını kontrol et.');
+                    } else {
+                      alert('❌ Hata: ' + (data.message || 'Bilinmeyen hata'));
+                    }
+                  } catch (error) {
+                    console.error('Batch tetikleme hatası:', error);
+                    alert('❌ Bağlantı hatası: ' + error.message);
+                  }
+                }}
+                style={{ marginTop: '10px', backgroundColor: '#4CAF50' }}
+              >
+                🧪 Batch Test Et
+              </button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="search-container">
+            <div className="search-wrapper">
+              <div className="search-icon">
+                <span className="material-icons">search</span>
+              </div>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="İşletme adı veya kampanya türüne göre ara..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="tabs-container">
+            <div className="tabs">
+              <button
+                className={`tab ${activeTab === 'pending' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('pending')}
+              >
+                Bekleyen Onaylar ({pendingBanners.length})
+              </button>
+              <button
+                className={`tab ${activeTab === 'approved' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('approved')}
+              >
+                Onaylananlar
+              </button>
+              <button
+                className={`tab ${activeTab === 'rejected' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('rejected')}
+              >
+                Reddedilenler
+              </button>
+              <button
+                className={`tab ${activeTab === 'all' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('all')}
+              >
+                Tümü
+              </button>
+            </div>
+          </div>
+
+          {/* Cards Grid */}
+          {loading ? (
+            <div className="loading-container">
+              <div className="spinner"></div>
+              <p>Yükleniyor...</p>
+            </div>
+          ) : currentBanners.length === 0 ? (
+            <div className="empty-state">
+              <span className="material-icons empty-icon">inbox</span>
+              <p>İçerik bulunamadı</p>
+            </div>
+          ) : (
+            <div className="cards-grid">
+              {currentBanners.map((banner) => (
+                <div key={banner._id} className="card">
+                  <div
+                    className="card-image"
+                    style={{ backgroundImage: `url(${getBannerImageUrl(banner)})` }}
+                  />
+                  
+                  <div className="card-content">
+                    <div className="card-header">
+                      <p className="card-title">{banner.title}</p>
+                      <span className={`badge ${getStatusBadge(banner.approvalStatus).class}`}>
+                        {getStatusBadge(banner.approvalStatus).text}
+                      </span>
+                    </div>
+                    
+                    <p className="card-subtitle">
+                      {banner.restaurant?.name || 'Kullanıcı'} - {banner.contentType === 'event' ? 'Etkinlik' : 'Kampanya'}
+                    </p>
+                    
+                    <p className="card-date">
+                      {banner.isEvent 
+                        ? formatDateRange(banner.startDate, banner.endDate)
+                        : formatDate(banner.createdAt)
+                      }
+                    </p>
+                  </div>
+
+                  <div className="card-actions">
+                    {activeTab === 'pending' && (
+                      <>
+                        <button
+                          className="btn-approve"
+                          onClick={() => handleApproveBanner(banner)}
+                        >
+                          <span className="material-icons">check_circle</span>
+                          <span>Onayla</span>
+                        </button>
+                        <button
+                          className="btn-reject"
+                          onClick={() => openRejectModal(banner)}
+                        >
+                          <span className="material-icons">cancel</span>
+                          <span>Reddet</span>
+                        </button>
+                    </>
+                  )}
+                    <button
+                      className="btn-detail"
+                      onClick={() => openDetailModal(banner)}
+                    >
+                      <span>Detaylar</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Detail Modal */}
+      {detailModalOpen && selectedBanner && (
+        <div className="modal-overlay" onClick={() => setDetailModalOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{selectedBanner.contentType === 'event' ? 'Etkinlik' : 'Kampanya'} Detayları</h2>
+              <button className="modal-close" onClick={() => setDetailModalOpen(false)}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            
+            <div className="modal-content">
+              {selectedBanner.bannerImage && (
+                <img 
+                  src={getBannerImageUrl(selectedBanner)} 
+                  alt={selectedBanner.title}
+                  className="modal-image"
+                />
+              )}
+              
+              <div className="modal-detail">
+                <h3>
+                  {selectedBanner.title}
+                  <span className={`badge badge-inline ${getStatusBadge(selectedBanner.approvalStatus).class}`} style={{ marginLeft: 8 }}>
+                    {getStatusBadge(selectedBanner.approvalStatus).text}
+                  </span>
+                </h3>
+                <p className="modal-description">{selectedBanner.description}</p>
+                
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">İşletme/Organizatör</span>
+                    <span className="detail-value">{selectedBanner.restaurant?.name || 'Kullanıcı'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Kategori</span>
+                    <span className="detail-value">{selectedBanner.category}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Tür</span>
+                    <span className="detail-value">
+                    {selectedBanner.contentType === 'event' ? 'Etkinlik' : 'Kampanya'}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Durum</span>
+                    <span className={`badge ${getStatusBadge(selectedBanner.approvalStatus).class}`}>
+                      {getStatusBadge(selectedBanner.approvalStatus).text}
+                    </span>
+                  </div>
+                  {selectedBanner.isEvent && (
+                    <div className="detail-item full-width">
+                      <span className="detail-label">Tarih Aralığı</span>
+                      <div className="meta-box">
+                        <span className="detail-value">
+                          {formatDateRange(selectedBanner.startDate, selectedBanner.endDate)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {!selectedBanner.isEvent && (
+                    <div className="detail-item full-width">
+                      <span className="detail-label">Oluşturulma</span>
+                      <div className="meta-box">
+                        <span className="detail-value">{formatDate(selectedBanner.createdAt)}</span>
+                      </div>
+                    </div>
+                  )}
+                {selectedBanner.rejectedReason && (
+                    <div className="detail-item full-width">
+                      <span className="detail-label">Red Sebebi</span>
+                      <div className="alert-error">{selectedBanner.rejectedReason}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setDetailModalOpen(false)}>
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
-          <Tab 
-            label={`Bekleyen (${pendingBanners.length})`} 
-            icon={<Schedule />} 
-            iconPosition="start"
-          />
-          <Tab 
-            label={`Onaylanan (${approvedBanners.length})`} 
-            icon={<CheckCircle />} 
-            iconPosition="start"
-          />
-          <Tab 
-            label={`Reddedilen (${rejectedBanners.length})`} 
-            icon={<Cancel />} 
-            iconPosition="start"
-          />
-        </Tabs>
-      </Box>
-
-      {/* Tab Panels */}
-      <TabPanel value={tabValue} index={0}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          renderBannerTable(pendingBanners, true)
-        )}
-      </TabPanel>
-
-      <TabPanel value={tabValue} index={1}>
-        {renderBannerTable(approvedBanners, false)}
-      </TabPanel>
-
-      <TabPanel value={tabValue} index={2}>
-        {renderBannerTable(rejectedBanners, false)}
-      </TabPanel>
-
-      {/* Detay Dialog */}
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Banner Detayları</DialogTitle>
-        <DialogContent>
-          {selectedBanner && (
-            <Box>
-              <Typography variant="h6" gutterBottom>{selectedBanner.title}</Typography>
-              <Typography variant="body2" paragraph>{selectedBanner.description}</Typography>
-              
-              <Grid container spacing={2} sx={{ mt: 2 }}>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Marka</Typography>
-                  <Typography variant="body2">{selectedBanner.restaurant?.name || '-'}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Kategori</Typography>
-                  <Typography variant="body2">{selectedBanner.category}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Tür</Typography>
-                  <Typography variant="body2">
-                    {selectedBanner.contentType === 'event' ? 'Etkinlik' : 'Kampanya'}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Onay Durumu</Typography>
-                  <Typography variant="body2">
-                    {selectedBanner.approvalStatus === 'pending' && 'Bekliyor'}
-                    {selectedBanner.approvalStatus === 'approved' && 'Onaylandı'}
-                    {selectedBanner.approvalStatus === 'rejected' && 'Reddedildi'}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="caption" color="textSecondary">AI Oluşturulan Metin</Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {selectedBanner.aiGeneratedText}
-                  </Typography>
-                </Grid>
-                {selectedBanner.rejectedReason && (
-                  <Grid item xs={12}>
-                    <Alert severity="error">
-                      <Typography variant="caption" fontWeight="bold">Red Sebebi:</Typography>
-                      <Typography variant="body2">{selectedBanner.rejectedReason}</Typography>
-                    </Alert>
-                  </Grid>
-                )}
-              </Grid>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailDialogOpen(false)}>Kapat</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Reddetme Dialog */}
-      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)}>
-        <DialogTitle>Banner'ı Reddet</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Red Sebebi"
-            type="text"
-            fullWidth
-            multiline
-            rows={4}
+      {/* Reject Modal */}
+      {rejectModalOpen && (
+        <div className="modal-overlay" onClick={() => setRejectModalOpen(false)}>
+          <div className="modal modal-small" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>İçeriği Reddet</h2>
+              <button className="modal-close" onClick={() => setRejectModalOpen(false)}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            
+            <div className="modal-content">
+              <label className="input-label">Red Sebebi</label>
+              <textarea
+                className="textarea"
+                rows="4"
+                placeholder="Lütfen red sebebini açıklayın..."
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRejectDialogOpen(false)}>İptal</Button>
-          <Button onClick={handleRejectBanner} color="error" variant="contained">
+            </div>
+            
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setRejectModalOpen(false)}>
+                İptal
+              </button>
+              <button className="btn-reject" onClick={handleRejectBanner}>
+                <span className="material-icons">cancel</span>
             Reddet
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
 export default AdminPanel;
-

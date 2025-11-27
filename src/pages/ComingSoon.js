@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Typography, Container, Paper } from '@mui/material';
-import { Construction, Schedule } from '@mui/icons-material';
+import { Box, Typography, Container, Paper, CircularProgress } from '@mui/material';
+import { Construction } from '@mui/icons-material';
 
 export default function ComingSoon() {
   return (
@@ -10,108 +10,156 @@ export default function ComingSoon() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #28A745 0%, #1E7E34 100%)',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <Container maxWidth="md">
+      {/* Animated Background Elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '-50%',
+          left: '-50%',
+          width: '200%',
+          height: '200%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundSize: '50px 50px',
+          animation: 'float 20s ease-in-out infinite',
+          '@keyframes float': {
+            '0%, 100%': {
+              transform: 'translate(0, 0)',
+            },
+            '50%': {
+              transform: 'translate(30px, 30px)',
+            },
+          },
+        }}
+      />
+      
+      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
         <Paper
-          elevation={10}
+          elevation={24}
           sx={{
-            p: 6,
+            p: { xs: 4, md: 6 },
             textAlign: 'center',
             borderRadius: 4,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0px 20px 60px rgba(0, 0, 0, 0.3)',
           }}
         >
-          {/* Icon */}
-          <Box sx={{ mb: 3 }}>
-            <Construction
+          {/* Animated Icon */}
+          <Box 
+            sx={{ 
+              mb: 4,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Box
               sx={{
-                fontSize: 120,
-                color: '#28A745',
-                animation: 'pulse 2s ease-in-out infinite',
-                '@keyframes pulse': {
-                  '0%, 100%': {
-                    transform: 'scale(1)',
-                  },
-                  '50%': {
-                    transform: 'scale(1.1)',
-                  },
-                },
+                position: 'relative',
+                width: 120,
+                height: 120,
               }}
-            />
+            >
+              <CircularProgress
+                variant="indeterminate"
+                size={120}
+                thickness={2}
+                sx={{
+                  color: '#667eea',
+                  position: 'absolute',
+                  animation: 'spin 2s linear infinite',
+                  '@keyframes spin': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' },
+                  },
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Construction
+                  sx={{
+                    fontSize: 48,
+                    color: 'white',
+                  }}
+                />
+              </Box>
+            </Box>
           </Box>
 
           {/* Title */}
           <Typography
             variant="h2"
             sx={{
-              fontWeight: 'bold',
+              fontWeight: 800,
               mb: 2,
-              background: 'linear-gradient(135deg, #28A745 0%, #1E7E34 100%)',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              fontSize: { xs: '2rem', md: '3rem' },
             }}
           >
-            Çok Yakında
+            Bakım Modu
           </Typography>
 
           {/* Subtitle */}
           <Typography
             variant="h5"
-            color="textSecondary"
-            sx={{ mb: 3 }}
+            color="text.secondary"
+            sx={{ 
+              mb: 5,
+              fontWeight: 500,
+              fontSize: { xs: '1.1rem', md: '1.5rem' },
+            }}
           >
-            Dashboard Panelimiz Çok Yakında Sizlerle!
+            Çok Yakında Sizlerle!
           </Typography>
-
-          {/* Description */}
-          <Typography
-            variant="body1"
-            color="textSecondary"
-            sx={{ mb: 4, lineHeight: 1.8 }}
-          >
-            Marka panelimiz üzerinde çalışıyoruz. Kısa süre içinde 
-            kampanyalarınızı yönetebileceğiniz, analiz yapabileceğiniz ve 
-            müşterilerinize ulaşabileceğiniz güçlü bir platform ile 
-            karşınızda olacağız.
-          </Typography>
-
-          {/* Features */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Schedule sx={{ fontSize: 48, color: '#28A745', mb: 1 }} />
-              <Typography variant="body2" color="textSecondary">
-                Kampanya Yönetimi
-              </Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Schedule sx={{ fontSize: 48, color: '#28A745', mb: 1 }} />
-              <Typography variant="body2" color="textSecondary">
-                Analiz & İstatistik
-              </Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Schedule sx={{ fontSize: 48, color: '#28A745', mb: 1 }} />
-              <Typography variant="body2" color="textSecondary">
-                Müşteri İletişimi
-              </Typography>
-            </Box>
-          </Box>
 
           {/* Footer Note */}
-          <Typography
-            variant="caption"
-            color="textSecondary"
-            sx={{ mt: 4, display: 'block' }}
+          <Box
+            sx={{
+              pt: 4,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+            }}
           >
-            Sorularınız için: appfaydana@gmail.com
-          </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 1 }}
+            >
+              Sorularınız için bizimle iletişime geçin
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#667eea',
+                fontWeight: 600,
+                fontSize: '1rem',
+              }}
+            >
+              appfaydana@gmail.com
+            </Typography>
+          </Box>
         </Paper>
       </Container>
     </Box>
   );
 }
-

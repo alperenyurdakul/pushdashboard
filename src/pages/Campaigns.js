@@ -210,31 +210,30 @@ function Campaigns() {
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Kampanya Yönetimi
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Restoran kampanyalarınızı yönetin ve performanslarını takip edin.
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+            Kampanya Yönetimi
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Kampanyalarınızı yönetin, performanslarını takip edin ve yeni kampanya oluşturun.
+          </Typography>
+        </Box>
+        <Box sx={{ position: 'sticky', top: 16 }}>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            size="large"
+            onClick={() => setEditDialogOpen(true)}
+          >
+            Yeni Kampanya
+          </Button>
+        </Box>
       </Box>
 
       {/* Quick Actions */}
-      <Box sx={{ mb: 4 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          size="large"
-          sx={{ mr: 2 }}
-          onClick={() => setEditDialogOpen(true)}
-        >
-          Yeni Kampanya
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<Campaign />}
-          size="large"
-        >
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Button variant="outlined" startIcon={<Campaign />} size="large">
           Kampanya Şablonları
         </Button>
       </Box>
@@ -494,14 +493,15 @@ function Campaigns() {
         <DialogTitle>
           {selectedCampaign ? 'Kampanya Düzenle' : 'Yeni Kampanya'}
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+        <DialogContent dividers sx={{ pt: 2 }}>
+          <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Kampanya Başlığı"
                 defaultValue={selectedCampaign?.title || ''}
                 variant="outlined"
+                placeholder="Örn: Öğle Menü %20 İndirim"
               />
             </Grid>
             <Grid item xs={12}>
@@ -512,6 +512,7 @@ function Campaigns() {
                 variant="outlined"
                 multiline
                 rows={3}
+                placeholder="Kampanya açıklamasını giriniz..."
               />
             </Grid>
             <Grid item xs={6}>
@@ -560,6 +561,7 @@ function Campaigns() {
                 label="Hedef Kitle"
                 defaultValue={selectedCampaign?.targetAudience || ''}
                 variant="outlined"
+                placeholder="Örn: 18-45 yaş"
               />
             </Grid>
             <Grid item xs={6}>
@@ -569,6 +571,7 @@ function Campaigns() {
                 type="number"
                 defaultValue={selectedCampaign?.budget || ''}
                 variant="outlined"
+                placeholder="₺"
               />
             </Grid>
             {selectedCampaign && (
@@ -590,7 +593,7 @@ function Campaigns() {
             )}
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ position: 'sticky', bottom: 0, bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
           <Button onClick={() => setEditDialogOpen(false)}>İptal</Button>
           <Button 
             onClick={() => {

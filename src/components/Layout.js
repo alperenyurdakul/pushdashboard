@@ -10,6 +10,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   Toolbar,
   Typography,
   Menu,
@@ -19,6 +20,8 @@ import {
   Chip,
   ThemeProvider,
   createTheme,
+  Badge,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -31,6 +34,8 @@ import {
   PhotoLibrary as PhotoLibraryIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
   Assessment as AssessmentIcon,
+  Notifications as NotificationsIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import theme from '../theme';
@@ -38,10 +43,10 @@ import theme from '../theme';
 const drawerWidth = 280;
 
 const menuItems = [
-  { text: 'Admin Panel', icon: <AdminPanelSettingsIcon />, path: '/admin', userTypes: ['admin'] },
-  { text: 'Marka Profili', icon: <StorefrontIcon />, path: '/brand-profile', userTypes: ['brand', 'eventBrand'] },
-  { text: 'Bannerlar', icon: <PhotoLibraryIcon />, path: '/banners', userTypes: ['brand', 'eventBrand'] },
-  { text: 'İstatistikler', icon: <AssessmentIcon />, path: '/analytics', userTypes: ['brand', 'eventBrand'] },
+  { text: 'Admin Panel', icon: <AdminPanelSettingsIcon />, path: '/admin', userTypes: ['admin'], section: 'Yönetim' },
+  { text: 'Marka Profili', icon: <StorefrontIcon />, path: '/brand-profile', userTypes: ['brand', 'eventBrand'], section: 'Marka' },
+  { text: 'Bannerlar', icon: <PhotoLibraryIcon />, path: '/banners', userTypes: ['brand', 'eventBrand'], section: 'Marka' },
+  { text: 'İstatistikler', icon: <AssessmentIcon />, path: '/analytics', userTypes: ['brand', 'eventBrand'], section: 'Marka' },
 ];
 
 function Layout({ children, currentUser, onLogout }) {
@@ -74,103 +79,215 @@ function Layout({ children, currentUser, onLogout }) {
 
   // Kullanıcı tipine göre menü öğelerini filtrele
   const userType = currentUser?.isAdmin ? 'admin' : (currentUser?.userType || 'customer');
-  const filteredMenuItems = menuItems.filter(item => 
-    item.userTypes.includes(userType)
-  );
+  const filteredMenuItems = menuItems.filter(item => item.userTypes.includes(userType));
+  const sections = Array.from(new Set(filteredMenuItems.map(i => i.section))).filter(Boolean);
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      background: 'linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%)',
+    }}>
       {/* Logo/Brand Name Section */}
-      <Box sx={{ p: 3, borderBottom: '1px solid #E9ECEF' }}>
-        <Typography 
-          variant="h6" 
-          component="div"
-          sx={{ 
-            fontWeight: 700,
-            color: '#28A745',
-            fontSize: '1.25rem'
-          }}
-        >
-          {currentUser?.name || 'FAYDANA'}
-        </Typography>
+      <Box sx={{ 
+        p: 3, 
+        borderBottom: '1px solid', 
+        borderColor: 'divider',
+        background: 'linear-gradient(135deg, rgba(255, 97, 94, 0.05) 0%, rgba(255, 97, 94, 0.02) 100%)',
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #ff615e 0%, #ff3d3a 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0px 4px 12px rgba(255, 97, 94, 0.3)',
+            }}
+          >
+            <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '1.2rem' }}>
+              F
+            </Typography>
+          </Box>
+          <Box>
+            <Typography 
+              variant="h6" 
+              component="div"
+              sx={{ 
+                fontWeight: 700,
+                color: 'primary.main',
+                fontSize: '1.1rem',
+                lineHeight: 1.2,
+              }}
+            >
+              {currentUser?.name || 'FAYDANA'}
+            </Typography>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'text.secondary',
+                fontSize: '0.75rem',
+                display: 'block',
+                mt: 0.25,
+              }}
+            >
+              {currentUser?.isAdmin ? 'Admin Panel' : 'Marka Yönetimi'}
+            </Typography>
+          </Box>
+        </Box>
       </Box>
       
       {/* Navigation Menu */}
-      <Box sx={{ flex: 1, p: 1 }}>
-        <List sx={{ px: 1 }}>
-          {filteredMenuItems.map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                selected={location.pathname === item.path}
-                onClick={() => handleNavigation(item.path)}
-                sx={{
-                  borderRadius: 2,
-                  py: 1.5,
-                  px: 2,
-                  '&.Mui-selected': {
-                    backgroundColor: '#E6F7ED',
-                    color: '#28A745',
-                    '&:hover': {
-                      backgroundColor: '#E6F7ED',
-                    },
-                    '& .MuiListItemIcon-root': {
-                      color: '#28A745',
-                    },
-                    '& .MuiListItemText-primary': {
-                      fontWeight: 600,
-                    },
-                  },
-                  '&:hover': {
-                    backgroundColor: '#F8F9FA',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText 
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: '0.95rem',
-                    fontWeight: 'inherit'
+      <Box sx={{ flex: 1, py: 2, overflow: 'auto' }}>
+        {sections.map((section) => (
+          <Box key={section} sx={{ mb: 2 }}>
+            <List
+              subheader={
+                <ListSubheader 
+                  component="div" 
+                  sx={{ 
+                    bgcolor: 'transparent', 
+                    color: 'text.secondary', 
+                    fontWeight: 600, 
+                    px: 3, 
+                    py: 1,
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
                   }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+                >
+                  {section}
+                </ListSubheader>
+              }
+              sx={{ px: 1.5 }}
+            >
+              {filteredMenuItems.filter(i => i.section === section).map((item) => (
+                <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    selected={location.pathname === item.path}
+                    onClick={() => handleNavigation(item.path)}
+                    sx={{
+                      borderRadius: 2,
+                      py: 1.5,
+                      px: 2,
+                      mx: 0.5,
+                      transition: 'all 0.2s ease-in-out',
+                      '&.Mui-selected': {
+                        background: 'linear-gradient(135deg, rgba(255, 97, 94, 0.1) 0%, rgba(255, 97, 94, 0.05) 100%)',
+                        color: 'primary.main',
+                        borderLeft: '3px solid',
+                        borderColor: 'primary.main',
+                        '&:hover': { 
+                          background: 'linear-gradient(135deg, rgba(255, 97, 94, 0.15) 0%, rgba(255, 97, 94, 0.08) 100%)',
+                        },
+                        '& .MuiListItemIcon-root': { color: 'primary.main' },
+                        '& .MuiListItemText-primary': { fontWeight: 600 },
+                      },
+                      '&:hover': { 
+                        backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                        transform: 'translateX(4px)',
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={item.text}
+                      primaryTypographyProps={{ 
+                        fontSize: '0.9rem', 
+                        fontWeight: 'inherit',
+                        letterSpacing: '0.2px',
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+            {section !== sections[sections.length - 1] && (
+              <Divider sx={{ my: 1.5, mx: 2, borderColor: 'divider' }} />
+            )}
+          </Box>
+        ))}
+      </Box>
+      
+      {/* Footer */}
+      <Box sx={{ 
+        p: 2, 
+        borderTop: '1px solid', 
+        borderColor: 'divider',
+        background: alpha(theme.palette.background.default, 0.5),
+      }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+          © 2024 Faydana
+        </Typography>
       </Box>
     </Box>
   );
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ display: 'flex', backgroundColor: '#F8F9FA', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex', backgroundColor: 'background.default', minHeight: '100vh' }}>
         <CssBaseline />
         <AppBar
           position="fixed"
           sx={{
             width: { sm: `calc(100% - ${drawerWidth}px)` },
             ml: { sm: `${drawerWidth}px` },
-            backgroundColor: '#FFFFFF',
-            color: '#212529',
-            boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.12)',
-            borderBottom: '1px solid #E9ECEF',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            color: 'text.primary',
+            boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
           }}
         >
-          <Toolbar sx={{ px: 3 }}>
+          <Toolbar sx={{ px: { xs: 2, sm: 3 }, minHeight: '64px !important' }}>
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: 'none' }, color: '#6C757D' }}
+              sx={{ 
+                mr: 2, 
+                display: { sm: 'none' }, 
+                color: 'text.secondary',
+                '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.08) },
+              }}
             >
               <MenuIcon />
             </IconButton>
             
+            {/* Search Bar - Placeholder for future */}
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
+            
             {/* User Info Section */}
-            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <IconButton
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.08) },
+                }}
+              >
+                <Badge badgeContent={0} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+              
+              <IconButton
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.08) },
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+              
               <Box
                 onClick={handleMenuOpen}
                 sx={{
@@ -180,36 +297,48 @@ function Layout({ children, currentUser, onLogout }) {
                   px: 2,
                   py: 1,
                   borderRadius: 2,
-                  transition: 'background-color 0.2s',
-                  '&:hover': {
-                    backgroundColor: '#F8F9FA',
+                  transition: 'all 0.2s',
+                  gap: 1.5,
+                  '&:hover': { 
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
                   },
                 }}
               >
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    mr: 2, 
-                    color: '#212529',
-                    fontSize: '0.95rem',
-                    fontWeight: 600
+                <Avatar
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    bgcolor: 'primary.main',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
                   }}
                 >
-                  {currentUser?.name}
-                </Typography>
+                  {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </Avatar>
                 
-                <Chip
-                  label="T"
-                  size="small"
-                  sx={{
-                    backgroundColor: '#28A745',
-                    color: '#FFFFFF',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    width: 24,
-                    height: 24,
-                  }}
-                />
+                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'text.primary',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {currentUser?.name}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: 'text.secondary',
+                      fontSize: '0.75rem',
+                      display: 'block',
+                    }}
+                  >
+                    {currentUser?.userType === 'eventBrand' ? 'Etkinlik Markası' : 'Marka'}
+                  </Typography>
+                </Box>
               </Box>
               
               {/* User Menu */}
@@ -226,22 +355,50 @@ function Layout({ children, currentUser, onLogout }) {
                   horizontal: 'right',
                 }}
                 sx={{
-                  mt: 1,
+                  mt: 1.5,
                   '& .MuiPaper-root': {
                     borderRadius: 2,
-                    minWidth: 200,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #E9ECEF',
+                    minWidth: 240,
+                    boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
                   }
                 }}
               >
-                <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #E9ECEF' }}>
-                  <Typography variant="body2" sx={{ color: '#6C757D', fontSize: '0.75rem' }}>
-                    {currentUser?.userType === 'eventBrand' ? 'Etkinlik Markası' : 'Marka'}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#212529' }}>
-                    {currentUser?.name}
-                  </Typography>
+                <Box sx={{ 
+                  px: 2.5, 
+                  py: 2, 
+                  borderBottom: '1px solid', 
+                  borderColor: 'divider',
+                  background: 'linear-gradient(135deg, rgba(255, 97, 94, 0.05) 0%, rgba(255, 97, 94, 0.02) 100%)',
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: 'primary.main',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                        {currentUser?.userType === 'eventBrand' ? 'Etkinlik Markası' : 'Marka'}
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.9rem' }}>
+                        {currentUser?.name}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  {currentUser?.email && (
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                      {currentUser.email}
+                    </Typography>
+                  )}
                 </Box>
                 <MenuItem
                   onClick={() => {
@@ -250,14 +407,14 @@ function Layout({ children, currentUser, onLogout }) {
                   }}
                   sx={{
                     py: 1.5,
-                    px: 2,
-                    '&:hover': {
-                      backgroundColor: '#F8F9FA',
+                    px: 2.5,
+                    '&:hover': { 
+                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
                     }
                   }}
                 >
                   <ListItemIcon>
-                    <EditIcon fontSize="small" sx={{ color: '#28A745' }} />
+                    <EditIcon fontSize="small" sx={{ color: 'primary.main' }} />
                   </ListItemIcon>
                   <ListItemText>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -270,10 +427,10 @@ function Layout({ children, currentUser, onLogout }) {
                   onClick={handleLogout}
                   sx={{
                     py: 1.5,
-                    px: 2,
+                    px: 2.5,
                     color: '#DC3545',
                     '&:hover': {
-                      backgroundColor: 'rgba(220, 53, 69, 0.08)',
+                      backgroundColor: alpha('#DC3545', 0.08),
                     }
                   }}
                 >
@@ -307,9 +464,10 @@ function Layout({ children, currentUser, onLogout }) {
               '& .MuiDrawer-paper': { 
                 boxSizing: 'border-box', 
                 width: drawerWidth,
-                backgroundColor: '#FFFFFF',
-                borderRight: '1px solid #E9ECEF',
-                boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.1)',
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%)',
+                borderRight: '1px solid',
+                borderColor: 'divider',
+                boxShadow: '4px 0px 16px rgba(0, 0, 0, 0.08)',
               },
             }}
           >
@@ -322,9 +480,10 @@ function Layout({ children, currentUser, onLogout }) {
               '& .MuiDrawer-paper': { 
                 boxSizing: 'border-box', 
                 width: drawerWidth,
-                backgroundColor: '#FFFFFF',
-                borderRight: '1px solid #E9ECEF',
-                boxShadow: '2px 0px 8px rgba(0, 0, 0, 0.1)',
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%)',
+                borderRight: '1px solid',
+                borderColor: 'divider',
+                boxShadow: '4px 0px 16px rgba(0, 0, 0, 0.08)',
               },
             }}
             open
@@ -337,14 +496,21 @@ function Layout({ children, currentUser, onLogout }) {
           component="main"
           sx={{
             flexGrow: 1,
-            p: { xs: 2, sm: 4 },
+            p: { xs: 2, sm: 3, md: 4 },
             width: { sm: `calc(100% - ${drawerWidth}px)` },
-            backgroundColor: '#F8F9FA',
+            backgroundColor: 'background.default',
             minHeight: '100vh',
+            position: 'relative',
           }}
         >
           <Toolbar />
-          {children}
+          <Box
+            sx={{
+              width: '100%',
+            }}
+          >
+            {children}
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>
