@@ -123,7 +123,8 @@ function BrandProfile({ currentUser, setCurrentUser }) {
     'Mobilya',
     'Market',
     'Çizim',
-    'Boyama'
+    'Boyama',
+    'Petrol Ofisi'
   ];
 
   const eventCategories = [
@@ -2311,14 +2312,14 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                               };
                               
                               return {
-                                ...prev,
-                                openingHours: {
+                              ...prev,
+                              openingHours: {
                                   ...currentOpeningHours,
-                                  [day]: {
+                                [day]: {
                                     ...(currentOpeningHours[day] || { open: '09:00', close: '22:00', isOpen: true }),
-                                    isOpen: e.target.checked
-                                  }
+                                  isOpen: e.target.checked
                                 }
+                              }
                               };
                             });
                           }}
@@ -2348,14 +2349,14 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                                 };
                                 
                                 return {
-                                  ...prev,
-                                  openingHours: {
+                                ...prev,
+                                openingHours: {
                                     ...currentOpeningHours,
-                                    [day]: {
+                                  [day]: {
                                       ...(currentOpeningHours[day] || { open: '09:00', close: '22:00', isOpen: true }),
-                                      open: e.target.value
-                                    }
+                                    open: e.target.value
                                   }
+                                }
                                 };
                               });
                             }}
@@ -2379,14 +2380,14 @@ function BrandProfile({ currentUser, setCurrentUser }) {
                                 };
                                 
                                 return {
-                                  ...prev,
-                                  openingHours: {
+                                ...prev,
+                                openingHours: {
                                     ...currentOpeningHours,
-                                    [day]: {
+                                  [day]: {
                                       ...(currentOpeningHours[day] || { open: '09:00', close: '22:00', isOpen: true }),
-                                      close: e.target.value
-                                    }
+                                    close: e.target.value
                                   }
+                                }
                                 };
                               });
                             }}

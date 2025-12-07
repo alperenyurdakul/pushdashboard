@@ -88,6 +88,7 @@ function LoginScreen({ onLogin }) {
       { value: 'Market', label: 'Market' },
       { value: 'Çizim', label: 'Çizim' },
       { value: 'Boyama', label: 'Boyama' },
+      { value: 'Petrol Ofisi', label: 'Petrol Ofisi' },
     ];
   };
 
